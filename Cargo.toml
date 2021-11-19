@@ -1,0 +1,24 @@
+[package]
+name = "almond_os"
+version = "0.2.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+# Low Level x86 Libraries
+bootloader = {version = "0.9.19"}
+x86_64 = "0.14.6"
+
+# Hardware Libraries
+uart_16550 = "0.2.15"
+pic8259 = "0.10.0"
+
+# Utility Libraries
+spin = "0.9.0"
+volatile = "0.2.0"
+bit_field = "0.10.0"
+
+[dependencies.lazy_static]
+version = "1.4.0"
+features = ["spin_no_std"]
