@@ -4,9 +4,6 @@ title: "[Bug]: "
 labels: ["bug"]
 
 body:
- - type: markdown
-   attributes:
-   - value: "Thanks For Filing A Bug Report, Please Help Us Fix It & Improve The Project."
    - type: dropdown
    id: version_build
    attributes:
