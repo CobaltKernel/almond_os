@@ -22,8 +22,7 @@ pub fn boot() {
     print!("Almond v{}\n", build_version!());
     strict_initialize!(test_init);
     strict_initialize!(sys::interrupt::initialize);
-
-    x86_64::instructions::interrupts::int3();
+    strict_initialize!(sys::timer::initialize);
 }   
 
 fn test_init() -> KResult<()> {

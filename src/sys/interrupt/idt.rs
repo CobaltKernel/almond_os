@@ -43,7 +43,10 @@ extern "x86-interrupt" fn breakpoint_handler(
 /// Set The Handler Function For A Given IRQ.
 pub fn set_irq_handler(irq: usize, handler: InterruptHandler) {
     no_interrupt!({
-        HANDLERS.lock()[system_index(irq)] = handler;
+        crate::print!("Handler Set To {:p} from {:p}\n", handler as *const u8, default_handler as *const u8);
+        let mut handlers = HANDLERS.lock();
+        handlers[system_index(irq)] = handler;
+        crate::print!("Handler Set To {:p} from {:p}\n", handlers[system_index(irq)] as *const u8, default_handler as *const u8);
     });
 }
 
@@ -59,7 +62,7 @@ macro_rules! gen_irq {
         /// PRE-GENERATED IRQ HANDLER
         pub extern "x86-interrupt" fn $handler(_stack_frame: InterruptStackFrame) {
             let handlers = HANDLERS.lock();
-            handlers[$irq]();
+            handlers[system_index($irq)]($irq);
             unsafe { crate::sys::interrupt::pics::PICS.lock().notify_end_of_interrupt(system_index($irq) as u8); }
         }
     };

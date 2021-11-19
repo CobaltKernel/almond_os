@@ -6,11 +6,13 @@ pub mod gdt;
 pub mod tss;
 pub mod pics;
 
-use crate::{KResult, print};
+use x86_64::instructions::interrupts;
+
+use crate::{KResult, no_interrupt, print};
 
 
 /// Abstracts An Interrupt Handler.
-pub type InterruptHandler = fn();
+pub type InterruptHandler = fn(u8);
 
 pub(self) const MAX_HANDLERS: usize = 256;
 
@@ -23,11 +25,15 @@ pub const fn max_handlers() -> usize {
 /// Initialize The Interrupt System.
 pub fn initialize() -> KResult<()> {
     unsafe {
-        gdt::reload();
-        idt::load();
-        pics::init();
+        no_interrupt!({
+            gdt::reload();
+            idt::load();
+            pics::init();
+        });
+
+        x86_64::instructions::interrupts::enable();
     }
     Ok(())
 }
 
-pub(self) fn default_handler() {}
+pub(self) fn default_handler(irq: u8) {print!(".");}
