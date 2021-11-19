@@ -1,0 +1,38 @@
+name: Bug Report
+description: File A Bug Report
+title: "[Bug]: "
+labels: ["bug"]
+
+body:
+ - type: markdown
+   attributes:
+   - value: |
+     Thanks For Filing A Bug Report, Please Help Us Fix It & Improve The Project.
+   - type: dropdown
+   id: version_build
+   attributes:
+      label: Build Version
+      description: What version of the Kernel Are You Running?
+      options:
+        - 0.2.0 (Current)
+   - type: dropdown
+   id: version_rust:
+   attribute:
+      label: Rust Version
+      description: What Version Of Rust Are You Using
+      options:
+        - Nightly 
+        - 1.56.1 - Stable
+        - 1.56.0 - Stable
+      validations:
+        required: true
+   - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us, what did you expect to happen?
+      placeholder: Tell us what you see!
+      value: "A bug happened!"
+    validations:
+      required: true
+   
