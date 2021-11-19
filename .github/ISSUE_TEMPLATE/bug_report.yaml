@@ -7,7 +7,7 @@ body:
  - type: markdown
    attributes:
    - value: |
-     Thanks For Filing A Bug Report, Please Help Us Fix It & Improve The Project.
+       Thanks For Filing A Bug Report, Please Help Us Fix It & Improve The Project.
    - type: dropdown
    id: version_build
    attributes:
