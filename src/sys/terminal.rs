@@ -6,15 +6,31 @@ use crate::no_interrupt;
 use super::vga::{self, ColorAttrib, put_char, Color};
 use spin::Mutex;
 use lazy_static::lazy_static;
+use vte::{Parser, Perform};
 
 lazy_static! {
     static ref WRITER: Mutex<TerminalWriter> = Mutex::new(TerminalWriter::new());
+    static ref PARSER: Mutex<Parser> = Mutex::new(Parser::new());
 }
 
 #[doc(hidden)]
 pub fn _print(args: core::fmt::Arguments) {
     no_interrupt!({
         WRITER.lock().write_fmt(args).expect("Failed To Write To VGA");
+    });
+}
+
+#[doc(hidden)]
+pub fn _set_bg(color: Color) {
+    no_interrupt!({
+        WRITER.lock().set_bg(color)
+    });
+}
+
+#[doc(hidden)]
+pub fn _set_fg(color: Color) {
+    no_interrupt!({
+        WRITER.lock().set_fg(color)
     });
 }
 
@@ -40,6 +56,7 @@ pub fn _eprint(args: core::fmt::Arguments) {
 }
 
 /// Handles Writing To A VGA Screen Buffer.
+#[derive(Debug, Clone)]
 struct TerminalWriter {
     x: usize, 
     y: usize,
@@ -73,8 +90,10 @@ impl TerminalWriter {
     }
 
     pub fn write_string(&mut self, s: &str) {
+        let performer = self;
+        let parser = &mut *PARSER.lock();
         for byte in s.bytes() {
-            self.write_byte(byte);
+            parser.advance(performer, byte);
         }
     }
 
@@ -144,6 +163,97 @@ impl Write for TerminalWriter {
     }
 }
 
+impl Perform for TerminalWriter {
+    fn print(&mut self, c: char) {
+        self.write_byte(c as u8);
+    }
+
+    fn execute(&mut self, byte: u8) {
+        self.write_byte(byte);
+    }
+
+    fn csi_dispatch(&mut self, params: &vte::Params, _intermediates: &[u8], _ignore: bool, action: char) {
+        match action {
+            'A' => {
+                let mut change = 0;
+                for p in params {
+                    change = p[0];
+                }
+                if change < self.y as u16 {
+                    self.y -= change as usize;
+                } else {
+                    self.y = 0;
+                }
+                
+            }
+
+            'B' => {
+                let mut change = 0;
+                for p in params {
+                    change = p[0];
+                }
+                if (change + self.y as u16) < 25u16 {
+                    self.y += change as usize;
+                } else {
+                    self.y = 24;
+                }
+                
+            }
+
+
+            'C' => {
+                let mut change = 0;
+                for p in params {
+                    change = p[0];
+                }
+                if change < self.x as u16 {
+                    self.x -= change as usize;
+                } else {
+                    self.x = 0;
+                }
+                
+            }
+
+            'D' => {
+                let mut change = 0;
+                for p in params {
+                    change = p[0];
+                }
+                if (change + self.x as u16) < 80u16 {
+                    self.x += change as usize;
+                } else {
+                    self.x = 79;
+                }
+                
+            }
+
+            'H' => { 
+                if params.len() == 0 {
+                    self.y = 0; 
+                    self.x = 0;
+                } else {
+                    for p in params {
+                        self.x = p[0] as usize; 
+                        self.y = p[1] as usize;
+                    }
+                }
+            },
+
+            'f' => {
+                for p in params {
+                    self.x = p[0] as usize; 
+                    self.y = p[1] as usize;
+                }
+            }
+
+
+
+
+            _ => {}
+        }
+    }
+}
+
 #[macro_export]
 /// Prints To The Terminal, Defaults To The VGA Terminal
 macro_rules! print {
@@ -171,3 +281,25 @@ macro_rules! clear {
         }
     };
 }
+
+#[macro_export]
+/// Set The Background Color
+macro_rules! set_bg {
+    ($color:expr) => {
+        {
+            $crate::sys::terminal::_set_bg($color);
+        }
+    };
+}
+
+#[macro_export]
+/// Set The Background Color
+macro_rules! set_fg {
+    ($color:expr) => {
+        {
+            $crate::sys::terminal::_set_fg($color);
+        }
+    };
+}
+
+

@@ -2,12 +2,14 @@
 //! & General Sleep Functions
 
 use bit_field::BitField;
-use x86_64::instructions::port::Port;
-use crate::{KResult, no_interrupt};
+use x86_64::instructions::{hlt, port::Port};
+use crate::{KResult, log, no_interrupt};
 use super::interrupt::idt::set_irq_handler;
 use spin::Mutex;
 
 static mut TICK_COUNT: u64 = 0;
+/// The Amount Of Ticks That Occur In One Second.
+pub const TICKS_PER_SECOND: f64 = 1000.0;
 
 
 /// The Main PIT Freqency, Runs At 1.93810Mhz.
@@ -40,7 +42,7 @@ pub fn set_frequency(freq: f64) {
 /// Set The IRQ0 Handler.
 pub fn initialize() -> KResult<()> {
     no_interrupt!({
-        set_frequency(5_0000.0);
+        set_frequency(TICKS_PER_SECOND);
         set_irq_handler(0, on_timer_tick);
     });
     Ok(())
@@ -58,5 +60,15 @@ pub fn on_timer_tick(_: u8) {
 pub fn ticks() -> u64 {
     unsafe {
         TICK_COUNT
+    }
+}
+
+/// Sleeps For An Amount Of Ticks. One Tick Is 1/50000 th Of A Second (20 us)
+pub fn sleep_ticks(time: u64) {
+    let start= ticks();
+    loop {
+        let now = ticks();
+        if (now - start) >= time { break; }
+        hlt();
     }
 }

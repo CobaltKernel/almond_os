@@ -43,10 +43,10 @@ extern "x86-interrupt" fn breakpoint_handler(
 /// Set The Handler Function For A Given IRQ.
 pub fn set_irq_handler(irq: usize, handler: InterruptHandler) {
     no_interrupt!({
-        crate::print!("Handler Set To {:p} from {:p}\n", handler as *const u8, default_handler as *const u8);
+        //crate::print!("Handler Set To {:p} from {:p}\n", handler as *const u8, default_handler as *const u8);
         let mut handlers = HANDLERS.lock();
         handlers[system_index(irq)] = handler;
-        crate::print!("Handler Set To {:p} from {:p}\n", handlers[system_index(irq)] as *const u8, default_handler as *const u8);
+        //crate::print!("Handler Set To {:p} from {:p}\n", handlers[system_index(irq)] as *const u8, default_handler as *const u8);
     });
 }
 

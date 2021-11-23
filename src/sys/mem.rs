@@ -1,8 +1,17 @@
 //!  {UNSTABLE}
 //! Utility Functions For Managing Memory & The Kernel heap. 
+use core::alloc::Layout;
+
+use bootloader::BootInfo;
 use x86_64::{PhysAddr, VirtAddr, structures::paging::PageTable};
 
 use crate::KResult;
+
+pub mod mapper;
+pub mod frame_allocator;
+mod allocator;
+
+pub mod buffer;
 
 /// Returns a mutable reference to the active level 4 table.
 ///
@@ -10,7 +19,7 @@ use crate::KResult;
 /// complete physical memory is mapped to virtual memory at the passed
 /// `offset`. Also, this function must be only called once
 /// to avoid aliasing `&mut` references (which is undefined behavior).
-pub unsafe fn l4_page_table_at(offset: VirtAddr) -> &'static mut PageTable {
+pub(self) unsafe fn l4_page_table_at(offset: VirtAddr) -> &'static mut PageTable {
     use x86_64::registers::control::Cr3;
 
     let (level_4_table_frame, _) = Cr3::read();
@@ -22,3 +31,21 @@ pub unsafe fn l4_page_table_at(offset: VirtAddr) -> &'static mut PageTable {
     &mut *page_table_ptr // unsafe
 }
 
+
+
+/// Initialize The Memory Subsystem.
+pub fn initialize(info: &'static BootInfo) -> KResult<()> {
+    allocator::initialize(info)
+    
+}
+
+/// Allocate Memory On The Kernel Heap.
+pub unsafe fn malloc(layout: Layout) -> *mut u8 {
+    allocator::malloc(layout)
+}
+
+
+/// Allocate Memory On The Kernel Heap.
+pub unsafe fn free(ptr: *mut u8, layout: Layout) {
+    allocator::free(ptr, layout);
+}

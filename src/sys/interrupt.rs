@@ -36,4 +36,4 @@ pub fn initialize() -> KResult<()> {
     Ok(())
 }
 
-pub(self) fn default_handler(irq: u8) {print!(".");}
+pub(self) fn default_handler(_: u8) {print!(".");}
