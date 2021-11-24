@@ -303,3 +303,28 @@ macro_rules! set_fg {
 }
 
 
+
+/// A Simple ASCII Spinner.
+pub struct Spinner {
+    state: u8
+}
+
+impl Spinner {
+    /// Create A New Spinner.
+    pub fn new() -> Self {
+        Self {
+            state: 0
+        }
+    }
+
+    /// Get The Current Glyph.
+    pub fn glyph(&self) -> char {
+        return r"|/-\".chars().nth((self.state as usize) % 4).unwrap();
+    }
+
+    /// Update The State.
+    pub fn update(&mut self) {
+        self.state = self.state.wrapping_add(1);
+    }
+}
+

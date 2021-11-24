@@ -3,6 +3,7 @@
 #![warn(missing_debug_implementations)]
 #![feature(abi_x86_interrupt)]
 #![feature(alloc_error_handler)]
+#![feature(const_mut_refs)] 
 
 //! Almond OS - Library
 
