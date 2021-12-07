@@ -50,6 +50,25 @@ impl Default for Color {
     }
 }
 
+impl Color {
+    /// Convert An ANSI Color Code To A VGA Color.
+    pub fn from_ansi(value: u8) -> Color {
+        match value {
+            30 | 40 => Color::Black,
+            31 | 41 => Color::Red,
+            32 | 42 => Color::Green,
+            33 | 43 => Color::Yellow,
+            34 | 44 => Color::Blue,
+            35 | 45 => Color::Magenta,
+            36 | 46 => Color::Cyan,
+            37 | 47 => Color::White,
+            39      => Color::White,
+                 49 => Color::Black,
+            _ => Color::Black,
+        }
+    }
+}
+
 impl From<u8> for Color {
     fn from(byte: u8) -> Self {
         match byte & 0xF {
@@ -73,6 +92,26 @@ impl From<u8> for Color {
         }
     }
 } 
+
+impl From<&str> for Color {
+    fn from(color: &str) -> Self {
+        match color {
+            "black" => {Color::Black},
+            "blue" => {Color::Blue},
+            "green" => {Color::Green},
+            "red" => {Color::Red},
+            "cyan" => {Color::Cyan},
+            "magenta" => {Color::Magenta},
+            "brown" => {Color::Brown},
+            "light_gray" | "light_grey" => {Color::LightGray},
+            "dark_gray" | "dark_grey" => {Color::DarkGray},
+            "light_green" => {Color::LightGreen}, 
+            _ => {Color::Black}
+        }
+    }
+}
+
+
 
 
 /// A Single VGA Character

@@ -86,7 +86,7 @@ pub fn ticks() -> u64 {
     }
 }
 
-/// Sleeps For An Amount Of Ticks. One Tick = 100us
+/// Sleeps For An Amount Of Ticks. One Tick = 1ms
 pub fn sleep_ticks(time: u64) {
     let start= ticks();
     loop {

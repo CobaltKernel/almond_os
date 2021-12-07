@@ -30,3 +30,9 @@ vte = "0.10.1"
 [dependencies.lazy_static]
 version = "1.4.0"
 features = ["spin_no_std"]
+
+[package.metadata.bootimage]
+run-args = [
+    "-hdb", "drive.img",
+    "-serial", "stdio"
+]

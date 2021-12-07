@@ -36,4 +36,9 @@ pub fn initialize() -> KResult<()> {
     Ok(())
 }
 
+/// Set The IRQ handler Function.
+pub fn set_irq_handler(irq: usize, handler: InterruptHandler) {
+    idt::set_irq_handler(irq, handler)
+}
+
 pub(self) fn default_handler(_: u8) {print!(".");}

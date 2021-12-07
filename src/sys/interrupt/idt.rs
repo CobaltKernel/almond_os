@@ -22,6 +22,8 @@ lazy_static::lazy_static! {
         idt[system_index(1)].set_handler_fn(irq_1);
         idt[system_index(2)].set_handler_fn(irq_2);
         idt[system_index(3)].set_handler_fn(irq_3);
+        idt[system_index(14)].set_handler_fn(irq_14);
+        idt[system_index(15)].set_handler_fn(irq_15);
 
         idt.breakpoint.set_handler_fn(breakpoint_handler);
 
@@ -74,3 +76,5 @@ gen_irq!(irq_2, 2);
 gen_irq!(irq_3, 3);
 gen_irq!(irq_4, 4);
 gen_irq!(irq_5, 5);
+gen_irq!(irq_14, 14);
+gen_irq!(irq_15, 15);

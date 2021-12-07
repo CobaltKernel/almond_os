@@ -24,11 +24,12 @@ pub type KResult<T> = core::result::Result<T, &'static str>;
 /// Run Boot Code
 pub fn boot(info: &'static BootInfo) { 
     clear!();
-    print!("Almond v{}\n", build_version!());
+    log!("Almond v{}\n", build_version!());
     strict_initialize!(test_init);
     strict_initialize!(sys::interrupt::initialize);
     strict_initialize!(sys::timer::initialize);
     strict_initialize!(sys::mem::initialize, info);
+    strict_initialize!(sys::storage::initialize);
 }   
 
 fn test_init() -> KResult<()> {
@@ -135,17 +136,23 @@ impl<T> Locked<T> {
 /// Logs To The Terminal
 macro_rules! log {
     ($fmt:expr, $($arg:tt)*) => {
+        $crate::set_fg!($crate::sys::vga::Color::Green);
+        $crate::print!("[LOG]: ");
         $crate::set_fg!($crate::sys::vga::Color::Yellow);
-        $crate::print!(concat!("[LOG]: ", $fmt), $($arg)*);
+        $crate::print!($fmt, $($arg)*);
         $crate::set_fg!($crate::sys::vga::Color::White);
     };
 
     ($fmt:expr) => {
+        $crate::set_fg!($crate::sys::vga::Color::Green);
+        $crate::print!("[LOG]: ");
         $crate::set_fg!($crate::sys::vga::Color::Yellow);
-        $crate::print!(concat!("[LOG]: ", $fmt));
+        $crate::print!($fmt);
         $crate::set_fg!($crate::sys::vga::Color::White);
     };
 }
+
+
 
 #[macro_export]
 /// Logs To The Terminal
@@ -158,4 +165,22 @@ macro_rules! err {
     ($fmt:expr) => {
         $crate::eprint!(concat!("[ERR]: ", $fmt));
     };
+}
+
+#[macro_export]
+/// Log To The Serial Port
+macro_rules! slog {
+    ($fmt:expr, $($arg:tt)*) => {
+        $crate::sprint!(concat!("\x1b[32m[LOG]:\x1b[39m ", $fmt), $($arg)*);
+    };
+
+    ($fmt:expr) => {
+        $crate::sprint!(concat!("\x1b[32m[LOG]:\x1b[39m ", $fmt));
+    };
+
+}
+
+/// Wait For The Next Interrupt.
+pub fn spin() {
+    hlt()
 }
