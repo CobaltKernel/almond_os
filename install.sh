@@ -1,4 +1,4 @@
-#!\usr\bin\bash
+#!/usr/bin/bash
 
 # Install QEMU Virtual Machine For Testing
 apt-get install qemu -y

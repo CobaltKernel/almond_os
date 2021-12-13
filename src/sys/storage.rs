@@ -1,15 +1,13 @@
 //! Packages & Controls Long-Term Storage Mechanisms.
 
-use crate::KResult;
 use crate::sys;
+use crate::KResult;
 
 pub mod ata;
-pub mod sector;
 pub mod fs_utils;
-
+pub mod sector;
 
 pub mod nut_fs;
-
 
 /// Link IRQ 14 & 15 To The ATA Handlers.
 pub fn initialize() -> KResult<()> {

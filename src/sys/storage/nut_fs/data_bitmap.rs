@@ -4,7 +4,7 @@ use bit_field::BitField;
 
 use crate::sys::storage::ata;
 
-use super::partition::{DATA_START, DATA_SIZE};
+use super::partition::{DATA_SIZE, DATA_START};
 
 /// Data Bitmap Functions.
 #[derive(Debug)]
@@ -50,7 +50,7 @@ impl DataBitmap {
         let mut bitmap = [0; 512];
         ata::read(drive, Self::bitmap(block), &mut bitmap).expect("Disk Read Error");
         bitmap[Self::offset(block) as usize].set_bit(Self::bit(block) as usize, true);
-        ata::write(drive, Self::bitmap(block), &bitmap);
+        ata::write(drive, Self::bitmap(block), &bitmap).expect("MKA");
     }
 
     /// Free A DataBlock Address
@@ -63,8 +63,11 @@ impl DataBitmap {
 
     /// Get The Next Free DataBlock
     pub fn next_free(drive: usize) -> Option<u32> {
-        for block in DATA_START..(DATA_START+DATA_SIZE as u32) {
-            if Self::is_free(drive, block) {return Some(block);} else {}
+        for block in DATA_START..(DATA_START + DATA_SIZE as u32) {
+            if Self::is_free(drive, block) {
+                return Some(block);
+            } else {
+            }
         }
         return None;
     }

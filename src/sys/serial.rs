@@ -1,9 +1,9 @@
 //! I/O Functions / Macros For Printing To The UART
 
+use core::fmt::{Arguments, Write};
 use lazy_static::lazy_static;
 use spin::Mutex;
 use uart_16550::SerialPort;
-use core::fmt::{Arguments, Write};
 
 use crate::no_interrupt;
 
@@ -16,7 +16,10 @@ lazy_static! {
 #[doc(hidden)]
 pub fn _print(args: Arguments) {
     no_interrupt!({
-        COMM0.lock().write_fmt(args).expect("Failed To Print To Serial 0");
+        COMM0
+            .lock()
+            .write_fmt(args)
+            .expect("Failed To Print To Serial 0");
     });
 }
 

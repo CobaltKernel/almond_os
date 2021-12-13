@@ -1,17 +1,18 @@
-//!  {UNSTABLE}
-//! Utility Functions For Managing Memory & The Kernel heap. 
+//! [UNSTABLE]
+//! Utility Functions For Managing Memory & The Kernel heap.
 use core::alloc::Layout;
 
 use bootloader::BootInfo;
-use x86_64::{PhysAddr, VirtAddr, structures::paging::PageTable};
+use x86_64::{structures::paging::PageTable, VirtAddr};
 
 use crate::KResult;
 
-pub mod mapper;
-pub mod frame_allocator;
 mod allocator;
+pub mod frame_allocator;
+pub mod mapper;
 
 pub mod buffer;
+pub mod ringbuffer;
 
 /// Returns a mutable reference to the active level 4 table.
 ///
@@ -31,19 +32,15 @@ pub(self) unsafe fn l4_page_table_at(offset: VirtAddr) -> &'static mut PageTable
     &mut *page_table_ptr // unsafe
 }
 
-
-
 /// Initialize The Memory Subsystem.
 pub fn initialize(info: &'static BootInfo) -> KResult<()> {
     allocator::initialize(info)
-    
 }
 
 /// Allocate Memory On The Kernel Heap.
 pub unsafe fn malloc(layout: Layout) -> *mut u8 {
     allocator::malloc(layout)
 }
-
 
 /// Allocate Memory On The Kernel Heap.
 pub unsafe fn free(ptr: *mut u8, layout: Layout) {

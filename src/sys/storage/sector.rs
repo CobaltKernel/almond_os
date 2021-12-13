@@ -3,11 +3,11 @@ use core::ops::{Index, IndexMut};
 
 use super::ata::SectorIndex;
 
-/// A Single ATA Sector 
+/// A Single ATA Sector
 #[derive(Debug)]
 pub struct Sector {
     addr: SectorIndex,
-    data: [u8; 512]
+    data: [u8; 512],
 }
 
 impl Sector {
@@ -17,9 +17,7 @@ impl Sector {
         for i in 0..data.len() {
             buffer[i] = data[i];
         }
-        Sector {
-            addr, data: buffer,
-        }
+        Sector { addr, data: buffer }
     }
 
     /// Get A Mutable Reference To The Sector Data
@@ -47,12 +45,11 @@ impl Default for Sector {
     }
 }
 
-
 impl Index<usize> for Sector {
     type Output = u8;
 
     fn index(&self, index: usize) -> &Self::Output {
-        return &self.data[index]
+        return &self.data[index];
     }
 }
 

@@ -18,7 +18,7 @@
 - [ ] Read-Only USTAR Filesystem for Boot files / Modules
 - [ ] Basic Usermode
 - [x] Support For x86-64 Machines
-- [ ] BIOS Bootloader
+- [x] BIOS Bootloader
 - [x] VGA 80x25 Textmode
 - [ ] Interrupt API
 - [ ] Memory Allocation
@@ -35,5 +35,5 @@
 
 ## Libraries
 
-- Bootloader 0.9.19 - 
+- Bootloader 0.9.19
 

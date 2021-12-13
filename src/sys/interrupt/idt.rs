@@ -1,10 +1,10 @@
 //! Utility Functions For Interacting With IDT.
 
-use crate::no_interrupt;
-use super::{InterruptHandler, MAX_HANDLERS, default_handler};
+use super::{default_handler, InterruptHandler, MAX_HANDLERS};
+use crate::{no_interrupt, shell};
 use lazy_static;
 use spin::Mutex;
-use x86_64::structures::idt::{InterruptStackFrame, InterruptDescriptorTable};
+use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
 
 /// The Offset Of The PIC1
 /// handler_index = irq + PIC1;
@@ -26,6 +26,8 @@ lazy_static::lazy_static! {
         idt[system_index(15)].set_handler_fn(irq_15);
 
         idt.breakpoint.set_handler_fn(breakpoint_handler);
+        idt.double_fault.set_handler_fn(double_fault);
+        //idt.page_fault.set_handler_fn(page_fault);
 
         idt
     };
@@ -36,10 +38,20 @@ pub unsafe fn load() {
     IDT.load();
 }
 
-extern "x86-interrupt" fn breakpoint_handler(
-    stack_frame: InterruptStackFrame)
-{
+extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
     crate::print!("EXCEPTION: BREAKPOINT\n{:#?}\n", stack_frame);
+}
+
+extern "x86-interrupt" fn double_fault(stack_frame: InterruptStackFrame, _: u64) -> ! {
+    crate::print!("EXCEPTION: DOUBLE FAULT\n{:#?}\n", stack_frame);
+    crate::run!(":d {} 32", stack_frame.instruction_pointer.as_u64());
+    crate::run!(":r");
+    crate::halt();
+}
+
+extern "x86-interrupt" fn page_fault(info: InterruptStackFrame, ec: PageFaultErrorCode) {
+    panic!("PAGE Fault: - {:?} - \n{:?}\n", ec, info);
+    
 }
 
 /// Set The Handler Function For A Given IRQ.
@@ -65,7 +77,11 @@ macro_rules! gen_irq {
         pub extern "x86-interrupt" fn $handler(_stack_frame: InterruptStackFrame) {
             let handlers = HANDLERS.lock();
             handlers[system_index($irq)]($irq);
-            unsafe { crate::sys::interrupt::pics::PICS.lock().notify_end_of_interrupt(system_index($irq) as u8); }
+            unsafe {
+                crate::sys::interrupt::pics::PICS
+                    .lock()
+                    .notify_end_of_interrupt(system_index($irq) as u8);
+            }
         }
     };
 }

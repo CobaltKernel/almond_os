@@ -2,7 +2,11 @@
 
 use alloc::vec::Vec;
 
-use crate::{KResult, sys::storage::{ata, nut_fs::partition::{DATA_SIZE, DISK_SIZE}}, log, slog};
+use crate::{
+    slog,
+    sys::storage::{ata, nut_fs::partition::DISK_SIZE},
+    KResult,
+};
 
 use super::data_bitmap::DataBitmap;
 
@@ -46,8 +50,8 @@ impl DataBlock {
         &self.data
     }
 
-     /// Mutable Reference To The Underlying Data
-     pub fn data_mut(&mut self) -> &mut [u8] {
+    /// Mutable Reference To The Underlying Data
+    pub fn data_mut(&mut self) -> &mut [u8] {
         &mut self.data
     }
 
@@ -58,7 +62,11 @@ impl DataBlock {
 
     /// Update The Next Index
     pub fn set_next(&mut self, value: u32) {
-        slog!("[Block 0x{:04x}]: Setting Next To Block 0x{:04x}\n", self.addr, value);
+        slog!(
+            "[Block 0x{:04x}]: Setting Next To Block 0x{:04x}\n",
+            self.addr,
+            value
+        );
         self.next = value;
     }
 
@@ -74,7 +82,7 @@ impl DataBlock {
         Self {
             addr,
             next: 0,
-            data: [0; 508]
+            data: [0; 508],
         }
     }
 
@@ -94,11 +102,10 @@ pub fn read_blocks(drive: usize, addr: u32, buffer: &mut Vec<DataBlock>) -> KRes
     let mut current = DataBlock::read(drive, addr)?;
     let mut addr;
     buffer.push(current.clone());
-    while current.next() > 0{
+    while current.next() > 0 {
         addr = current.next();
         buffer.push(current.clone());
         current = DataBlock::read(drive, addr)?;
     }
     Ok(())
 }
-

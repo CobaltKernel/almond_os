@@ -1,17 +1,18 @@
 //! The NutFS Implementation
 
-use core::alloc::{Layout};
+use core::alloc::Layout;
 
-use alloc::vec::{Vec};
 use alloc::vec;
+use alloc::vec::Vec;
 
 use crate::sys::mem;
 use crate::sys::terminal::Spinner;
-use crate::{KResult, log, slog};
+use crate::{log, slog, KResult};
 
+use self::data_bitmap::DataBitmap;
 use self::datablock::DataBlock;
 use self::metablock::MetaData;
-use self::partition::{KERNEL_START, KERNEL_SIZE};
+use self::partition::KERNEL_START;
 
 use super::ata;
 
@@ -19,10 +20,9 @@ pub mod datablock;
 pub mod metablock;
 pub mod superblock;
 
-pub mod partition;
-pub mod meta_bitmap;
 pub mod data_bitmap;
-
+pub mod meta_bitmap;
+pub mod partition;
 
 /// Write A Block Of Data At Index
 /// Marked As Unsafe As The Caller MUST Guarantee That The Given Block Index
@@ -54,7 +54,6 @@ pub fn alloc_data(drive: usize, data: &[u8]) -> KResult<DataBlock> {
     let mut current = head;
     let mut last = head;
     for (i, chunk) in data.chunks(508).into_iter().enumerate() {
-
         slog!("== Saving Chunk #{:04} == \n", i);
         for (ind, byte) in chunk.iter().enumerate() {
             current.data_mut()[ind] = *byte;
@@ -92,83 +91,73 @@ pub fn read(drive: usize, index: u32, buffer: &mut [u8]) -> KResult<(u32, usize,
     Ok((index + blocks_used - 1, pos % 508, pos))
 }
 
-/// Copy Pointer Data Onto Disk. 
+/// Copy Pointer Data Onto Disk.
 /// UNSAFE BECAUSE LEN MUST BE EXACTLY EQUAL TO THE UNDERLYING STRUCTURE'S SIZE.
-pub unsafe fn write_const_ptr(drive: usize, index: u32, ptr: *const u8, len: usize) -> KResult<DataBlock> {
+pub unsafe fn write_const_ptr(
+    drive: usize,
+    index: u32,
+    ptr: *const u8,
+    len: usize,
+) -> KResult<DataBlock> {
     let slice = core::slice::from_raw_parts(ptr, len);
     write_data(drive, index, slice)
 }
 
-/// Copy Pointer Data Onto Disk. 
+/// Copy Pointer Data Onto Disk.
 /// UNSAFE BECAUSE LEN MUST BE EXACTLY EQUAL TO THE UNDERLYING STRUCTURE'S SIZE.
-pub unsafe fn write_mut_ptr(drive: usize, index: u32, ptr: *mut u8, len: usize) -> KResult<DataBlock> {
+pub unsafe fn write_mut_ptr(
+    drive: usize,
+    index: u32,
+    ptr: *mut u8,
+    len: usize,
+) -> KResult<DataBlock> {
     let slice = core::slice::from_raw_parts(ptr, len);
     write_data(drive, index, slice)
 }
 
-
-/// Copy Pointer Data Onto Disk. 
+/// Copy Pointer Data Onto Disk.
 /// UNSAFE BECAUSE LEN MUST BE EXACTLY EQUAL TO THE UNDERLYING STRUCTURE'S SIZE AND
 /// ALIGN MUST BE A POWER OF TWO.
-pub unsafe fn read_ptr_mut<T>(drive: usize, index: u32, len: usize, align: usize) -> KResult<*mut T> {
+pub unsafe fn read_ptr_mut<T>(
+    drive: usize,
+    index: u32,
+    len: usize,
+    align: usize,
+) -> KResult<*mut T> {
     let mut buffer = vec![0; len];
     read(drive, index, &mut buffer)?;
     let ptr = mem::malloc(Layout::from_size_align_unchecked(len, align)) as *mut u8;
     for offset in 0..len {
-        ptr.offset(offset as isize).write_volatile(buffer[offset]); 
+        ptr.offset(offset as isize).write_volatile(buffer[offset]);
     }
     Ok(ptr as *mut T)
 }
-
 
 /// Reads Meta Data From Drive At Index
 pub fn read_metadata(drive: usize, index: u32) -> KResult<MetaData> {
     MetaData::load(drive, index)
 }
- 
 
 /// Create A New File (DO NOT RUN).
-pub fn create_file(name: &str) -> KResult<MetaData> {
-    todo!()
+pub fn create_file(drive: usize, name: &str) -> KResult<MetaData> {
+    MetaData::allocate(
+        drive,
+        name,
+        metablock::FileType::File,
+        DataBitmap::next_free(drive).unwrap(),
+    )
 }
-
-fn allocate_metadata() -> Option<u32> {
-    todo!()
-}
-
-fn allocate_datablock() -> Option<u32> {
-    todo!()
-}
-
-const META_BITMAP_START: u32 = 4096;
-const DATA_BITMAP_START: u32 = 2048;
-const BLOCK_SIZE: u32 = 512;
-const BLOCKS_PER_BITMAP: u32 = 8 * BLOCK_SIZE;
-
-struct Bitmap;
-
-
-impl Bitmap {
-    pub fn is_meta_free(drive: usize, address: u32) -> bool {
-        let bitmap = ();
-        let offset =  address / 8;
-        let bit =     address % 8;
-
-        let data = [0; 512];
-
-            // bitmap = (meta_addr - meta_data_start) / 4096
-
-            todo!()
-    }
-}
-
 
 /// Copies The Bootloader & Kernel Onto The 2nd Drive.
 pub unsafe fn install() -> KResult<()> {
-    ata::copy(1,0, KERNEL_START as u32, ata::Disk::new(0).unwrap().identify().unwrap().2 as usize)?;
+    ata::copy(
+        1,
+        0,
+        KERNEL_START as u32,
+        ata::Disk::new(0).unwrap().identify().unwrap().2 as usize,
+    )?;
     Ok(())
 }
-
 
 /// Formats The Drive. Starts From Sector 0, Up to Size.
 pub unsafe fn format(drive: usize) -> KResult<()> {
@@ -178,7 +167,12 @@ pub unsafe fn format(drive: usize) -> KResult<()> {
         ata::write(drive, i as u32, &[0; 512])?;
 
         if i % 128 == 0 {
-            log!("Formatting Sectors... {} - ({:05}/{:05})\r", spinner.glyph(), i, size);
+            log!(
+                "Formatting Sectors... {} - ({:05}/{:05})\r",
+                spinner.glyph(),
+                i,
+                size
+            );
             spinner.update();
         }
     }

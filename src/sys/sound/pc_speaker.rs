@@ -13,7 +13,9 @@ pub fn play() {
     let tmp: u8 = unsafe { Port::new(0x61).read() };
     if !tmp.get_bit(0) {
         let mut port: Port<u8> = Port::new(0x61);
-        unsafe { port.write(tmp | 1); }
+        unsafe {
+            port.write(tmp | 1);
+        }
     }
 }
 
@@ -22,6 +24,8 @@ pub fn stop() {
     let tmp: u8 = unsafe { Port::new(0x61).read() };
     if tmp.get_bit(0) {
         let mut port: Port<u8> = Port::new(0x61);
-        unsafe { port.write(tmp & 0xFC); }
+        unsafe {
+            port.write(tmp & 0xFC);
+        }
     }
 }

@@ -4,6 +4,10 @@ use alloc::string::*;
 
 use crate::{sys::storage::ata, KResult};
 
+use super::{
+    datablock::DataBlock,
+    meta_bitmap::{self},
+};
 
 /// Encodes File Type Information
 #[repr(u8)]
@@ -25,12 +29,12 @@ impl FileType {
     /// Converts a [u8] To a [FileType]
     pub fn from_u8(byte: u8) -> Self {
         match byte {
-            0 => {Self::Free},
-            1 => {Self::File},
-            2 => {Self::Directory},
-            3 => {Self::CharDev},
-            4 => {Self::BlockDev},
-            _ => {Self::Free}
+            0 => Self::Free,
+            1 => Self::File,
+            2 => Self::Directory,
+            3 => Self::CharDev,
+            4 => Self::BlockDev,
+            _ => Self::Free,
         }
     }
 }
@@ -38,13 +42,39 @@ impl FileType {
 /// File Meta Data
 #[derive(Debug, Clone)]
 pub struct MetaData {
-    name: String, 
+    addr: u32,
+    name: String,
     file_type: FileType,
     size: u32,
     start: u32,
 }
 
 impl MetaData {
+    /// This MetaData's LBA
+    pub fn addr(&self) -> u32 {
+        self.addr
+    }
+
+    /// Allocate A New MetaData Block
+    pub fn allocate(
+        drive: usize,
+        name: &str,
+        file_type: FileType,
+        data_start: u32,
+    ) -> KResult<MetaData> {
+        if let Some(block) = meta_bitmap::MetaBitmap::next_free(drive) {
+            Ok(MetaData {
+                addr: block,
+                file_type,
+                name: name.to_string(),
+                size: 0,
+                start: data_start,
+            })
+        } else {
+            Err("Unable To Create File.")
+        }
+    }
+
     /// Load MetaData From A Drive.
     pub fn load(drive: usize, index: u32) -> KResult<MetaData> {
         let mut data: [u8; 512] = [0; 512];
@@ -54,35 +84,35 @@ impl MetaData {
         let size = u32::from_be_bytes((&data[257..261]).try_into().unwrap());
         let start = u32::from_be_bytes((&data[261..265]).try_into().unwrap());
 
-        Ok(
-            Self {
-                file_type,
-                name,
-                size,
-                start,
-            }
-        )
+        Ok(Self {
+            addr: index,
+            file_type,
+            name,
+            size,
+            start,
+        })
     }
-    
+
     /// Creates New MetaData
-    pub fn new(name: &str, file_type: FileType, start: u32) -> Self {
+    pub fn new(index: u32, name: &str, file_type: FileType, start: u32) -> Self {
         Self {
+            addr: index,
             file_type,
             name: name.to_string(),
             size: 0,
-            start
+            start,
         }
     }
 
     /// Write To Drive At Index
-    pub fn save(&self, drive: usize, index: u32) -> KResult<()> {
-        let mut data: [u8; 512] =  [0x20; 512];
+    pub fn save(&self, drive: usize) -> KResult<()> {
+        let mut data: [u8; 512] = [0x20; 512];
         data[0..self.name.as_bytes().len()].copy_from_slice(self.name.as_bytes());
         data[256..257].copy_from_slice(&(self.file_type as u8).to_be_bytes());
         data[257..261].copy_from_slice(&self.size.to_be_bytes());
         data[261..265].copy_from_slice(&self.start.to_be_bytes());
 
-        ata::write(drive, index, &data)?;
+        ata::write(drive, self.addr, &data)?;
 
         Ok(())
     }
@@ -90,5 +120,10 @@ impl MetaData {
     /// Set The File Size
     pub fn set_size(&mut self, size: u32) {
         self.size = size;
+    }
+
+    /// Set Head DataBlock
+    pub fn set_data(&mut self, block: &DataBlock) {
+        self.start = block.addr()
     }
 }

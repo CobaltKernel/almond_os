@@ -1,21 +1,15 @@
 pub mod null_allocator;
 use core::alloc::{GlobalAlloc, Layout};
 
-
-use linked_list_allocator::*;
 pub mod bump;
 pub mod linked_list;
 
 pub const HEAP_START: usize = 0x_4444_4444_0000;
-pub const HEAP_SIZE: usize = 1024 * 1024 * 1; // 1MiB
-
-#[cfg_attr(feature = "null_allocator", global_allocator)]
-static NULL_ALLOCATOR: null_allocator::NullAllocator = null_allocator::NullAllocator;
-
+pub const HEAP_SIZE: usize = 1024 * 1024 * 2; // 1MiB
 
 #[cfg_attr(feature = "list_allocator", global_allocator)]
-static LINKED_LIST_ALLOCATOR: Locked<linked_list::LinkedListAllocator> = Locked::new(linked_list::LinkedListAllocator::new());
-
+static LINKED_LIST_ALLOCATOR: Locked<linked_list::LinkedListAllocator> =
+    Locked::new(linked_list::LinkedListAllocator::new());
 
 #[cfg_attr(feature = "bump_allocator", global_allocator)]
 static BUMP: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
@@ -27,7 +21,7 @@ fn alloc_error_handler(layout: alloc::alloc::Layout) -> ! {
 
 #[derive(Debug, Clone, Copy)]
 pub struct MemoryStats {
-    pub allocated: usize
+    pub allocated: usize,
 }
 
 use bootloader::BootInfo;
@@ -38,11 +32,11 @@ use x86_64::{
     VirtAddr,
 };
 
-use crate::{KResult, Locked, print, sys::terminal::Spinner};
+use crate::{print, sys::terminal::Spinner, KResult, Locked};
 
 use self::bump::BumpAllocator;
 
-use super::{frame_allocator::{self, BootInfoFrameAllocator}, mapper::init_mapper};
+use super::{frame_allocator::BootInfoFrameAllocator, mapper::init_mapper};
 
 fn init_kheap(
     mapper: &mut impl Mapper<Size4KiB>,
@@ -63,9 +57,7 @@ fn init_kheap(
             .allocate_frame()
             .ok_or(MapToError::FrameAllocationFailed)?;
         let flags = PageTableFlags::PRESENT | PageTableFlags::WRITABLE;
-        unsafe {
-            mapper.map_to(page, frame, flags, frame_allocator)?.flush()
-        };
+        unsafe { mapper.map_to(page, frame, flags, frame_allocator)?.flush() };
         i += 1;
         if i % 64 == 0 && i > 0 {
             spinner.update();
@@ -107,13 +99,11 @@ fn current_allocator() -> &'static impl GlobalAlloc {
     &LINKED_LIST_ALLOCATOR
 }
 
-
 /// Allocate Memory On The Kernel Heap.
 pub unsafe fn malloc(layout: Layout) -> *mut u8 {
     let allocator = current_allocator();
     allocator.alloc_zeroed(layout)
 }
-
 
 /// Free Memory On The Kernel Heap.
 pub unsafe fn free(ptr: *mut u8, layout: Layout) {

@@ -7,27 +7,32 @@ extern crate alloc;
 use core::alloc::Layout;
 
 use alloc::boxed::Box;
-use almond_os::{err, log, print, sys::{self, mem::{frame_allocator, malloc, mapper}, terminal::Spinner, timer::{TICKS_PER_SECOND, sleep_ticks, uptime}, vga, storage::nut_fs::{self, metablock::{MetaData, FileType}, partition::KERNEL_SIZE}}, slog};
-use bootloader::{BootInfo, entry_point};
-use x86_64::{PhysAddr, VirtAddr, instructions::hlt, structures::paging::{Page, Translate}};
+use almond_os::{
+    err, log, print, slog,
+    sys::{
+        self, input,
+        mem::{frame_allocator, malloc, mapper, ringbuffer::RingBuffer},
+        storage::nut_fs::{
+            self,
+            metablock::{FileType, MetaData},
+            partition::KERNEL_SIZE,
+        },
+        terminal::Spinner,
+        timer::{sleep_ticks, uptime, TICKS_PER_SECOND},
+        vga,
+    }, shell,
+};
+use bootloader::{entry_point, BootInfo};
+use x86_64::{
+    instructions::hlt,
+    structures::paging::{Page, Translate},
+    PhysAddr, VirtAddr,
+};
 
 entry_point!(kernel_main);
 
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
     almond_os::boot(boot_info);
-    log!("Installing Kernel...\n");
-
-
-    unsafe {
-        nut_fs::format(1);
-        nut_fs::install()
-    };
-
-
-    
-
-    
-
+    shell::main();
     almond_os::halt();
 }
-

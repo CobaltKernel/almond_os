@@ -1,8 +1,12 @@
 //! The NutFS Superblock
 
-use alloc::{string::String, borrow::ToOwned};
+use alloc::{borrow::ToOwned, string::String};
 
-use crate::{KResult, sys::{self, storage::ata}, log};
+use crate::{
+    log,
+    sys::{self, storage::ata},
+    KResult,
+};
 
 const MAGIC: &'static str = "NUTFS";
 
@@ -21,21 +25,30 @@ pub struct SuperBlock {
 impl SuperBlock {
     /// Converts A Byte Slice Into A Superblock. Returns [Option::None] If The Data is Malformed.
     pub fn new(data: &[u8]) -> Option<SuperBlock> {
-
-        log!("Magic ID: {} - Needed: {}", String::from_utf8(data[34..39].to_vec()).unwrap_or_default().trim_end().to_owned(), MAGIC);
-        if String::from_utf8(data[34..39].to_vec()).unwrap_or_default() != MAGIC {return None;};
-
-        return Some(
-            Self {
-                volume_name: String::from_utf8(data[0..16].to_vec()).unwrap_or_default().trim_end().to_owned(),
-                volume_size: u32::from_be_bytes((&data[16..20]).try_into().unwrap()),
-                volume_start: u32::from_be_bytes((&data[20..24]).try_into().unwrap()),
-                data_size: u8::from_be_bytes((&data[24..25]).try_into().unwrap()),
-                data_start: u32::from_be_bytes((&data[25..29]).try_into().unwrap()),
-                meta_size: u8::from_be_bytes((&data[29..30]).try_into().unwrap()),
-                meta_start: u32::from_be_bytes((&data[30..34]).try_into().unwrap()),
-            }
+        log!(
+            "Magic ID: {} - Needed: {}",
+            String::from_utf8(data[34..39].to_vec())
+                .unwrap_or_default()
+                .trim_end()
+                .to_owned(),
+            MAGIC
         );
+        if String::from_utf8(data[34..39].to_vec()).unwrap_or_default() != MAGIC {
+            return None;
+        };
+
+        return Some(Self {
+            volume_name: String::from_utf8(data[0..16].to_vec())
+                .unwrap_or_default()
+                .trim_end()
+                .to_owned(),
+            volume_size: u32::from_be_bytes((&data[16..20]).try_into().unwrap()),
+            volume_start: u32::from_be_bytes((&data[20..24]).try_into().unwrap()),
+            data_size: u8::from_be_bytes((&data[24..25]).try_into().unwrap()),
+            data_start: u32::from_be_bytes((&data[25..29]).try_into().unwrap()),
+            meta_size: u8::from_be_bytes((&data[29..30]).try_into().unwrap()),
+            meta_start: u32::from_be_bytes((&data[30..34]).try_into().unwrap()),
+        });
     }
 
     /// Load The Superblock from Drive.
@@ -51,7 +64,15 @@ impl SuperBlock {
     }
 
     /// Create A New Superblock
-    pub fn create(volume_name: &str, volume_start: u32, volume_size: u32, data_start: u32, data_size: u8, meta_start: u32, meta_size: u8) -> SuperBlock {
+    pub fn create(
+        volume_name: &str,
+        volume_start: u32,
+        volume_size: u32,
+        data_start: u32,
+        data_size: u8,
+        meta_start: u32,
+        meta_size: u8,
+    ) -> SuperBlock {
         Self {
             data_size,
             data_start,
@@ -64,15 +85,14 @@ impl SuperBlock {
     }
 
     /// Writes The Superblock To The Drive.
-    pub fn write(&self, drive: usize,  addr: u32) -> KResult<()> {
-
+    pub fn write(&self, drive: usize, addr: u32) -> KResult<()> {
         let mut buffer = [0; 512];
         for i in 0..self.volume_name.len() {
             buffer[i] = self.volume_name.as_bytes()[i];
         }
 
         for i in self.volume_name.len()..16 {
-            buffer[i as usize] = b' '; 
+            buffer[i as usize] = b' ';
         }
 
         buffer[16..20].copy_from_slice(&self.volume_size.to_be_bytes());
@@ -88,6 +108,4 @@ impl SuperBlock {
 
         Ok(())
     }
-
-
 }

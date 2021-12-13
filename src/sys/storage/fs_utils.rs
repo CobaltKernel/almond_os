@@ -43,5 +43,5 @@ pub trait FileSystem {
 
 /// Read A String From A Slice.
 pub fn read_string_utf8(data: &[u8], def: &str, offset: usize, len: usize) -> String {
-    return (String::from_utf8(data.to_vec()).unwrap_or(def.to_string()));
+    return String::from_utf8(data[offset..offset + len].to_vec()).unwrap_or(def.to_string());
 }

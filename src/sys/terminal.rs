@@ -3,10 +3,15 @@ use core::fmt::Write;
 
 use crate::no_interrupt;
 
-use super::vga::{self, ColorAttrib, put_char, Color};
-use spin::Mutex;
+use super::vga::{self, put_char, Color, ColorAttrib};
 use lazy_static::lazy_static;
+use spin::Mutex;
 use vte::{Parser, Perform};
+use x86_64::instructions::port::Port;
+
+const BUFFER_WIDTH:  usize = 80;
+const CRTC_ADDR_REG: u16 = 0x3D4;
+const CRTC_DATA_REG: u16 = 0x3D5;
 
 lazy_static! {
     static ref WRITER: Mutex<TerminalWriter> = Mutex::new(TerminalWriter::new());
@@ -16,26 +21,25 @@ lazy_static! {
 #[doc(hidden)]
 pub fn _print(args: core::fmt::Arguments) {
     no_interrupt!({
-        WRITER.lock().write_fmt(args).expect("Failed To Write To VGA");
+        WRITER
+            .lock()
+            .write_fmt(args)
+            .expect("Failed To Write To VGA");
     });
 }
 
 #[doc(hidden)]
 pub fn _set_bg(color: Color) {
-    no_interrupt!({
-        WRITER.lock().set_bg(color)
-    });
+    no_interrupt!({ WRITER.lock().set_bg(color) });
 }
 
 #[doc(hidden)]
 pub fn _set_fg(color: Color) {
-    no_interrupt!({
-        WRITER.lock().set_fg(color)
-    });
+    no_interrupt!({ WRITER.lock().set_fg(color) });
 }
 
 #[doc(hidden)]
-pub fn _clear(fg: Color, bg: Color)  {
+pub fn _clear(fg: Color, bg: Color) {
     no_interrupt!({
         WRITER.lock().clear_screen(ColorAttrib::new(fg, bg));
     });
@@ -51,14 +55,13 @@ pub fn _eprint(args: core::fmt::Arguments) {
         writer.write_fmt(args).expect("Failed To Write To VGA");
         writer.set_bg(bg);
         writer.set_fg(fg);
-
     });
 }
 
 /// Handles Writing To A VGA Screen Buffer.
 #[derive(Debug, Clone)]
 struct TerminalWriter {
-    x: usize, 
+    x: usize,
     y: usize,
 
     fg_color: Color,
@@ -70,16 +73,27 @@ impl TerminalWriter {
         Self {
             bg_color: Color::Black,
             fg_color: Color::White,
-            
+
             x: 0,
             y: 0,
         }
     }
 
     pub fn write_byte(&mut self, chr: u8) {
-        if chr == b'\n' {self.newline(); return;}
-        if chr == b'\r' {self.c_return(); return;}
-        put_char(self.x, self.y, chr, ColorAttrib::new(self.bg_color, self.fg_color));
+        if chr == b'\n' {
+            self.newline();
+            return;
+        }
+        if chr == b'\r' {
+            self.c_return();
+            return;
+        }
+        put_char(
+            self.x,
+            self.y,
+            chr,
+            ColorAttrib::new(self.bg_color, self.fg_color),
+        );
 
         self.x += 1;
         if self.x >= 80 {
@@ -87,6 +101,7 @@ impl TerminalWriter {
             self.newline();
         }
 
+        self.write_cursor();
     }
 
     pub fn write_string(&mut self, s: &str) {
@@ -96,8 +111,6 @@ impl TerminalWriter {
             parser.advance(performer, byte);
         }
     }
-
-    
 
     fn newline(&mut self) {
         if self.y < 24 {
@@ -135,24 +148,44 @@ impl TerminalWriter {
         }
     }
 
-    /// Sets Bits 0:3 Of the Color Attribute. 
+    /// Sets Bits 0:3 Of the Color Attribute.
     pub fn set_fg(&mut self, color: Color) {
         self.fg_color = color;
     }
 
-    /// Sets Bits 4:7 Of the Color Attribute. 
+    /// Sets Bits 4:7 Of the Color Attribute.
     pub fn set_bg(&mut self, color: Color) {
         self.bg_color = color;
     }
 
-    /// Returns Bits 0:3 Of the Color Attribute. 
+    /// Returns Bits 0:3 Of the Color Attribute.
     pub fn fg(&self) -> Color {
         self.fg_color
     }
 
-    /// Returns Bits 4:7 Of the Color Attribute. 
+    /// Returns Bits 4:7 Of the Color Attribute.
     pub fn bg(&self) -> Color {
         self.bg_color
+    }
+
+    /// Homes The cursor
+    pub fn home(&mut self) {
+        self.x = 0;
+        self.y = 0;
+        self.write_cursor();
+    }
+
+    fn write_cursor(&mut self) {
+        
+        let pos = if self.x == 0 { self.x } else {self.x - 1} + self.y * BUFFER_WIDTH;
+        let mut addr = Port::new(CRTC_ADDR_REG);
+        let mut data = Port::new(CRTC_DATA_REG);
+        unsafe {
+            addr.write(0x0F as u8);
+            data.write((pos & 0xFF) as u8);
+            addr.write(0x0E as u8);
+            data.write(((pos >> 8) & 0xFF) as u8);
+        }
     }
 }
 
@@ -172,7 +205,13 @@ impl Perform for TerminalWriter {
         self.write_byte(byte);
     }
 
-    fn csi_dispatch(&mut self, params: &vte::Params, _intermediates: &[u8], _ignore: bool, action: char) {
+    fn csi_dispatch(
+        &mut self,
+        params: &vte::Params,
+        _intermediates: &[u8],
+        _ignore: bool,
+        action: char,
+    ) {
         match action {
             'A' => {
                 let mut change = 0;
@@ -184,7 +223,6 @@ impl Perform for TerminalWriter {
                 } else {
                     self.y = 0;
                 }
-                
             }
 
             'B' => {
@@ -197,9 +235,7 @@ impl Perform for TerminalWriter {
                 } else {
                     self.y = 24;
                 }
-                
             }
-
 
             'C' => {
                 let mut change = 0;
@@ -211,7 +247,6 @@ impl Perform for TerminalWriter {
                 } else {
                     self.x = 0;
                 }
-                
             }
 
             'D' => {
@@ -224,30 +259,26 @@ impl Perform for TerminalWriter {
                 } else {
                     self.x = 79;
                 }
-                
             }
 
-            'H' => { 
+            'H' => {
                 if params.len() == 0 {
-                    self.y = 0; 
+                    self.y = 0;
                     self.x = 0;
                 } else {
                     for p in params {
-                        self.x = p[0] as usize; 
+                        self.x = p[0] as usize;
                         self.y = p[1] as usize;
                     }
                 }
-            },
+            }
 
             'f' => {
                 for p in params {
-                    self.x = p[0] as usize; 
+                    self.x = p[0] as usize;
                     self.y = p[1] as usize;
                 }
             }
-
-
-
 
             _ => {}
         }
@@ -270,51 +301,55 @@ macro_rules! eprint {
     };
 }
 
-
 #[macro_export]
 /// Clears The Screen
 macro_rules! clear {
-    () => {
-        {
-            use $crate::sys::vga::Color;
-            $crate::sys::terminal::_clear(Color::Black, Color::Yellow);
-        }
-    };
+    () => {{
+        use $crate::sys::vga::Color;
+        $crate::sys::terminal::_clear(Color::Black, Color::Yellow);
+    }};
+
+
+    ($fg: expr, $bg: expr) => {{
+        use $crate::sys::vga::Color;
+        $crate::sys::terminal::_clear($fg, $bg);
+    }};
 }
 
 #[macro_export]
 /// Set The Background Color
 macro_rules! set_bg {
-    ($color:expr) => {
-        {
-            $crate::sys::terminal::_set_bg($color);
-        }
-    };
+    ($color:expr) => {{
+        $crate::sys::terminal::_set_bg($color);
+    }};
 }
 
 #[macro_export]
 /// Set The Background Color
 macro_rules! set_fg {
-    ($color:expr) => {
-        {
-            $crate::sys::terminal::_set_fg($color);
-        }
-    };
+    ($color:expr) => {{
+        $crate::sys::terminal::_set_fg($color);
+    }};
 }
 
 
+/// Return The Cursor To Home (0, 0)
+pub fn home() {
+    no_interrupt!({
+        WRITER.lock().home();
+    })
+}
 
 /// A Simple ASCII Spinner.
+#[derive(Debug)]
 pub struct Spinner {
-    state: u8
+    state: u8,
 }
 
 impl Spinner {
     /// Create A New Spinner.
     pub fn new() -> Self {
-        Self {
-            state: 0
-        }
+        Self { state: 0 }
     }
 
     /// Get The Current Glyph.
@@ -327,4 +362,3 @@ impl Spinner {
         self.state = self.state.wrapping_add(1);
     }
 }
-
