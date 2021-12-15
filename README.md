@@ -2,11 +2,11 @@
 
 ## To-Do
 - [ ] - Kernel Level Debugger
-  - [ ] - Peek Memory
+  - [x] - Peek Memory
   - [ ] - Assemble Small Routines
-  - [ ] - Peek Register values
+  - [x] - Peek Register values
   - [ ] - Write Memory To Disk
-  - [ ] - Disassemble Memory
+  - [x] - Disassemble Memory
   
 - [x] - Keyboard I/O
   - [x] - Input System
