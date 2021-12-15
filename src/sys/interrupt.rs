@@ -1,15 +1,12 @@
 //! Front-end to the Interrupts Sub-System.
 //! Attempts To Provide A Single, Stable API Across Platforms.
 
-pub mod idt;
 pub mod gdt;
-pub mod tss;
+pub mod idt;
 pub mod pics;
+pub mod tss;
 
-use x86_64::instructions::interrupts;
-
-use crate::{KResult, no_interrupt, print};
-
+use crate::{no_interrupt, print, KResult};
 
 /// Abstracts An Interrupt Handler.
 pub type InterruptHandler = fn(u8);
@@ -36,4 +33,11 @@ pub fn initialize() -> KResult<()> {
     Ok(())
 }
 
-pub(self) fn default_handler(irq: u8) {print!(".");}
+/// Set The IRQ handler Function.
+pub fn set_irq_handler(irq: usize, handler: InterruptHandler) {
+    idt::set_irq_handler(irq, handler)
+}
+
+pub(self) fn default_handler(_: u8) {
+    print!(".");
+}

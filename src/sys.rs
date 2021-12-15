@@ -1,5 +1,11 @@
 //! Holds System Functions.
-pub mod vga;
+pub mod interrupt;
+pub mod mem;
+pub mod serial;
+pub mod sound;
+pub mod storage;
 pub mod terminal;
 pub mod timer;
-pub mod interrupt;
+pub mod vga;
+pub mod debugger;
+pub mod input;

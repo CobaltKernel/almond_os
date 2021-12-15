@@ -2,20 +2,7 @@
 
 use spin::Mutex;
 use volatile::Volatile;
-
-
-const ATTR_ADDR_DATA_REG:      u16 = 0x3C0;
-const ATTR_DATA_READ_REG:      u16 = 0x3C1;
-const SEQUENCER_ADDR_REG:      u16 = 0x3C4;
-const DAC_ADDR_WRITE_MODE_REG: u16 = 0x3C8;
-const DAC_DATA_REG:            u16 = 0x3C9;
-const GRAPHICS_ADDR_REG:       u16 = 0x3CE;
-const CRTC_ADDR_REG:           u16 = 0x3D4;
-const CRTC_DATA_REG:           u16 = 0x3D5;
-const INPUT_STATUS_REG:        u16 = 0x3DA;
-
 const BUFFER_PTR: *mut u8 = 0xb8000 as *mut _;
-
 
 lazy_static::lazy_static! {
     static ref BUFFER: Mutex<&'static mut TextBuffer> = Mutex::new(unsafe {TextBuffer::new(BUFFER_PTR)});
@@ -50,11 +37,30 @@ impl Default for Color {
     }
 }
 
+impl Color {
+    /// Convert An ANSI Color Code To A VGA Color.
+    pub fn from_ansi(value: u8) -> Color {
+        match value {
+            30 | 40 => Color::Black,
+            31 | 41 => Color::Red,
+            32 | 42 => Color::Green,
+            33 | 43 => Color::Yellow,
+            34 | 44 => Color::Blue,
+            35 | 45 => Color::Magenta,
+            36 | 46 => Color::Cyan,
+            37 | 47 => Color::White,
+            39 => Color::White,
+            49 => Color::Black,
+            _ => Color::Black,
+        }
+    }
+}
+
 impl From<u8> for Color {
     fn from(byte: u8) -> Self {
         match byte & 0xF {
             0 => Self::Black,
-            1 => Self::Blue, 
+            1 => Self::Blue,
             2 => Self::Green,
             3 => Self::Cyan,
             4 => Self::Red,
@@ -62,18 +68,35 @@ impl From<u8> for Color {
             6 => Self::Brown,
             7 => Self::LightGray,
             8 => Self::DarkGray,
-            9 => Self::LightBlue, 
+            9 => Self::LightBlue,
             10 => Self::LightGreen,
             11 => Self::LightCyan,
             12 => Self::LightRed,
             13 => Self::Pink,
             14 => Self::Yellow,
             15 => Self::White,
-            _ => {Self::default()}
+            _ => Self::default(),
         }
     }
-} 
+}
 
+impl From<&str> for Color {
+    fn from(color: &str) -> Self {
+        match color {
+            "black" => Color::Black,
+            "blue" => Color::Blue,
+            "green" => Color::Green,
+            "red" => Color::Red,
+            "cyan" => Color::Cyan,
+            "magenta" => Color::Magenta,
+            "brown" => Color::Brown,
+            "light_gray" | "light_grey" => Color::LightGray,
+            "dark_gray" | "dark_grey" => Color::DarkGray,
+            "light_green" => Color::LightGreen,
+            _ => Color::Black,
+        }
+    }
+}
 
 /// A Single VGA Character
 pub type Character = u8;
@@ -126,14 +149,17 @@ pub struct TextBuffer {
 impl TextBuffer {
     /// Creates A &'static mut Textbuffer From A u8-ptr.
     /// The Function Is Unsafe As The Caller MUST Guarantee That the Pointer Is Not in use by
-    /// anything within 32-Kilobytes. 
+    /// anything within 32-Kilobytes.
     pub unsafe fn new(ptr: *mut u8) -> &'static mut TextBuffer {
         &mut *(ptr as *mut TextBuffer)
     }
 
     /// Overwrites The Character At (x, y) with the Supplied Color & Character.
     pub fn put_char(&mut self, x: usize, y: usize, chr: Character, color: ColorAttrib) {
-        self.contents[y][x].write(ScreenChar { chr, color: color.raw() })
+        self.contents[y][x].write(ScreenChar {
+            chr,
+            color: color.raw(),
+        })
     }
 
     /// Returns A Copy Of The Data At (x, y) as a ([Character], [ColorAttrib]) tuple.
@@ -141,22 +167,16 @@ impl TextBuffer {
         let sc = self.contents[y][x].read();
         (sc.chr, ColorAttrib::from(sc.color))
     }
-
-
 }
 
 /// Writes Character Data Into The Global VGA Buffer
 pub fn put_char(x: usize, y: usize, chr: Character, color: ColorAttrib) {
-    crate::no_interrupt!({
-        BUFFER.lock().put_char(x, y, chr, color)
-    });
+    crate::no_interrupt!({ BUFFER.lock().put_char(x, y, chr, color) });
 }
 
 /// Reads Character Data From The Global VGA Buffer
 pub fn get_char(x: usize, y: usize) -> (Character, ColorAttrib) {
-    crate::no_interrupt!({
-        BUFFER.lock().get_char(x, y)
-    })
+    crate::no_interrupt!({ BUFFER.lock().get_char(x, y) })
 }
 
 #[derive(Debug)]
@@ -187,9 +207,7 @@ impl Palette {
                 (0xFF, 0x00, 0xFF), // Pink (Light Magenta)
                 (0xFF, 0xFF, 0x00), // Yellow (Light Yellow)
                 (0xFF, 0xFF, 0xFF), // White
-            ]
+            ],
         }
     }
 }
-
-
