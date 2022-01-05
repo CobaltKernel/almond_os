@@ -1,15 +1,33 @@
 //! AlmondOS Shell Program
 mod sleep;
 mod debug;
+mod ls;
+mod beep;
+mod env;
+mod clear;
+mod cat;
+mod mount;
+mod hexdump;
+mod almond_vm;
+mod assembler;
+mod elf;
 
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 
 use crate::sys::{input, terminal};
 use crate::sys::vga::Color;
-use crate::{print, set_bg, set_fg, clear};
+use crate::{print, set_bg, set_fg, clear, globals};
 
+use self::assembler::Assembler;
+use self::beep::Beep;
+use self::cat::Cat;
+use self::clear::ClearScreen;
 use self::debug::{Disassemble, RegisterDump, MemoryDump};
+use self::elf::ElfReader;
+use self::hexdump::{HexDump, SectorDump};
+use self::ls::FileLister;
+use self::mount::Mount;
 use self::sleep::Sleep;
 
 /// Alias For The Arguments Of A Program
@@ -34,6 +52,15 @@ pub fn run(cmd: &str) -> ShellExitCode {
         "disassemble" | ":d" => Disassemble.run(parts),
         "registers" | ":r" => {RegisterDump.run(parts)}
         "memory_dump" | ":md" => {MemoryDump.run(parts)}
+        "ls" => {FileLister.run(parts)}
+        "clear" | "clr" | "cls" => {ClearScreen.run(parts)}
+        "beep" => {Beep.run(parts)}
+        "cat" => {Cat.run(parts)}
+        "mount" => {Mount.run(parts)}
+        "hexdump" => {HexDump.run(parts)}
+        "blkdump" | "blkd" => {SectorDump.run(parts)}
+        "asm" => {Assembler::get(parts.clone()).run(parts)}
+        "elf" => {ElfReader.run(parts)}
 
         _ => { print!("Unknown Command: '{}'...\n", cmd); ShellExitCode::NoSuchProgram},
     };
@@ -48,9 +75,9 @@ pub fn main() {
     set_bg!(Color::Blue);
     set_fg!(Color::White);
     'input_loop: loop {
-        let  cmd = input::input(">> ");
+        let  cmd = input::input(globals().as_ref().unwrap().get_string("PROMPT").unwrap_or(&String::from(">> ")));
+        if cmd.is_empty() {continue 'input_loop;}
         if cmd == String::from("exit") {break 'input_loop;}
-
         run(cmd.as_str());
     }
 

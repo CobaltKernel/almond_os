@@ -9,7 +9,7 @@ type KeyboardUk = Keyboard<Uk105Key, ScancodeSet1>;
 
 use crate::{KResult, print};
 
-use super::mem::ringbuffer::RingBuffer256;
+use super::{mem::ringbuffer::RingBuffer256, terminal};
 
 /// ASCII DELETE KEY (0x7F)
 pub const DELETE: char = '\x7f';
@@ -44,7 +44,7 @@ pub fn on_key_pressed(_: u8) {
     if let Ok(Some(event)) = kb.add_byte(byte) {
         if let Some(key) = kb.process_keyevent(event) {
             match key {
-                DecodedKey::RawKey(_) => {}
+                DecodedKey::RawKey(_) => { /*terminal::process_raw_key(kc)*/ }
                 DecodedKey::Unicode(codepoint) => unsafe {
                     LAST_KEY = codepoint;
                 },

@@ -7,8 +7,9 @@
   - [x] - Peek Register values
   - [ ] - Write Memory To Disk
   - [x] - Disassemble Memory
-  
-- [x] - Keyboard I/O
+
+- [ ] - Keyboard I/O
+  - [ ] - Double ended Queue
   - [x] - Input System
   
 
@@ -22,5 +23,5 @@ sudo ./install.sh
 ## Compiling & Running
 Linux 
 ```bash
-cargo run
+./build.sh
 ```

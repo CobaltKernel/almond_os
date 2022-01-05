@@ -9,3 +9,4 @@ pub mod timer;
 pub mod vga;
 pub mod debugger;
 pub mod input;
+pub mod config;

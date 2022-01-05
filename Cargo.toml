@@ -31,6 +31,9 @@ bit_field = "0.10.0"
 linked_list_allocator = "0.9.1"
 vte = "0.10.1"
 
+# Loaders
+elf_rs = "0.2.0"
+
 # Debugging Libraries
 [dependencies.iced-x86]
 version = "1.15.0"
@@ -43,6 +46,7 @@ features = ["spin_no_std"]
 
 [package.metadata.bootimage]
 run-args = [
-    "-hdb", "drive.img",
-    "-serial", "stdio"
+    "-hdb", "disk.img",
+    "-serial", "stdio",
+    "-soundhw", "pcspk"
 ]

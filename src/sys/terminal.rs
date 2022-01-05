@@ -5,6 +5,7 @@ use crate::no_interrupt;
 
 use super::vga::{self, put_char, Color, ColorAttrib};
 use lazy_static::lazy_static;
+use pc_keyboard::{DecodedKey, KeyCode};
 use spin::Mutex;
 use vte::{Parser, Perform};
 use x86_64::instructions::port::Port;
@@ -187,6 +188,23 @@ impl TerminalWriter {
             data.write(((pos >> 8) & 0xFF) as u8);
         }
     }
+
+
+    pub fn process_key(&mut self, key: DecodedKey) {
+        match key {
+            DecodedKey::RawKey(kc) => {
+                self.process_raw_key(kc);
+            },
+            DecodedKey::Unicode(chr) => {self.write_byte(chr as u8)}
+        }
+    }
+
+    fn process_raw_key(&mut self, kc: KeyCode) {
+        match kc {
+            KeyCode::F1 => {self.x = 0; self.y = 0},
+            _ => {}
+        }
+    }
 }
 
 impl Write for TerminalWriter {
@@ -338,6 +356,20 @@ pub fn home() {
     no_interrupt!({
         WRITER.lock().home();
     })
+}
+
+/// Process Keycodes
+pub fn process_key(key: DecodedKey) {
+    no_interrupt!({
+        WRITER.lock().process_key(key);
+    });
+}
+
+/// Process Keycodes
+pub fn process_raw_key(key: KeyCode) {
+    no_interrupt!({
+        WRITER.lock().process_raw_key(key);
+    });
 }
 
 /// A Simple ASCII Spinner.
