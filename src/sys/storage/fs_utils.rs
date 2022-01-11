@@ -2,6 +2,8 @@
 
 use alloc::string::{String, ToString};
 
+use crate::slog;
+
 #[derive(Debug)]
 /// Represents An Object That Implements [FileIO]
 pub struct FileHandle(u16);
@@ -45,3 +47,22 @@ pub trait FileSystem {
 pub fn read_string_utf8(data: &[u8], def: &str, offset: usize, len: usize) -> String {
     return String::from_utf8(data[offset..offset + len].to_vec()).unwrap_or(def.to_string());
 }
+
+/// Read A Nul-Terminated ASCII String From A Slice
+pub fn read_asciiz(slice: &[u8], offset: usize, len: usize) -> String {
+    let slice = &slice[offset..offset+len];
+    let mut s = String::new();
+    for byte in slice {
+        if *byte == 0 { break; }
+        s.push(*byte as char);
+    }
+    s
+}
+
+
+/// Read A Nul-Terminated ASCII String From A Slice
+pub fn read_asciiz_octal(slice: &[u8], offset: usize, len: usize) -> usize {
+    //slog!("String: {}\n", read_asciiz(slice, offset, len));
+    usize::from_str_radix(&read_asciiz(slice, offset, len), 8).unwrap_or_default()
+}
+

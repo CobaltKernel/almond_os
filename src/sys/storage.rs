@@ -6,7 +6,8 @@ use crate::KResult;
 pub mod ata;
 pub mod fs_utils;
 pub mod sector;
-
+pub mod almond_fs;
+pub mod ustar;
 pub mod nut_fs;
 
 /// Link IRQ 14 & 15 To The ATA Handlers.

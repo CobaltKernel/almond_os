@@ -1,5 +1,5 @@
 //! Interfaces With ATA PIO-LBA24 Disks.
-//! https://wiki.osdev.org/ATA_PIO_Mode
+//! <https://wiki.osdev.org/ATA_PIO_Mode>
 use core::fmt::Debug;
 
 use alloc::string::String;
@@ -81,7 +81,8 @@ pub struct Disk {
     pub bus: u8,
     /// Disk ID (0|1)
     pub disk: u8,
-    sectors: SectorIndex,
+    /// Sector Count
+    pub sectors: SectorIndex,
 
     ata_bus: Bus,
 }
@@ -436,10 +437,22 @@ pub fn bus_0_irq(_: u8) {}
 #[doc(hidden)]
 pub fn bus_1_irq(_: u8) {}
 
+#[deprecated]
 /// Read From The Given Drive.
 pub fn read(drive: usize, addr: SectorIndex, buf: &mut [u8]) -> KResult<()> {
     if let Some(mut disk) = Disk::new(drive) {
         disk.read(addr, buf)
+    } else {
+        return Err("Failed To Get Drive.");
+    }
+}
+
+/// Read From The Given Drive.
+pub fn read_block(drive: usize, addr: SectorIndex) -> KResult<[u8; 512]> {
+    if let Some(mut disk) = Disk::new(drive) {
+        let mut buf = [0; 512];
+        disk.read(addr, &mut buf);
+        Ok(buf)
     } else {
         return Err("Failed To Get Drive.");
     }

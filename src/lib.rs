@@ -1,5 +1,5 @@
 #![no_std]
-#![deny(missing_docs)]
+//#![deny(missing_docs)]
 #![warn(missing_debug_implementations)]
 #![feature(abi_x86_interrupt)]
 #![feature(alloc_error_handler)]
@@ -10,17 +10,28 @@
 
 extern crate alloc;
 
+use alloc::string::String;
 use bootloader::BootInfo;
+use sys::config::SystemConfig;
 use core::panic::PanicInfo;
 use x86_64::instructions::hlt;
+use lazy_static::lazy_static;
+use spin::{Mutex, MutexGuard};
 
 pub mod sys;
 pub mod shell;
+pub mod vfs;
 
 pub use x86_64::instructions::interrupts::without_interrupts;
 
+use crate::{sys::storage::ustar, vfs::{Device, AtaDevice}};
+
 /// The Kernel Result, Used To unify error-handling / reporting.
 pub type KResult<T> = core::result::Result<T, &'static str>;
+
+lazy_static! {
+    pub static ref GLOBAL_CONFIG: Mutex<Option<SystemConfig>> = Mutex::new(None);
+}
 
 // TODO(George): Add Boot Code
 /// Run Boot Code
@@ -33,6 +44,16 @@ pub fn boot(info: &'static BootInfo) {
     strict_initialize!(sys::input::initialize);
     strict_initialize!(sys::mem::initialize, info);
     strict_initialize!(sys::storage::initialize);
+
+    run!("mount HDB");
+
+    if sys::storage::ustar::list(1).contains(&String::from("disk/global.cfg")) {
+        slog!("Loading Global Config\n");
+        let mut cfg_lock =  GLOBAL_CONFIG.lock();
+        *cfg_lock = Some(SystemConfig::from_str(&ustar::MetaData::load(1, "disk/global.cfg").unwrap().read_string()));
+    } else {
+        serr!("Unable To Locate 'disk/global.cfg'\n");
+    }
 }
 
 fn test_init() -> KResult<()> {
@@ -169,11 +190,11 @@ macro_rules! err {
 /// Log To The Serial Port
 macro_rules! slog {
     ($fmt:expr, $($arg:tt)*) => {
-        $crate::sprint!(concat!("\x1b[32m[LOG]:\x1b[39m ", $fmt), $($arg)*);
+        $crate::sprint!(concat!("\x1b[32m[LOG|", file!(), ":", line!(), ":", column!(), "]: \x1b[39m",  $fmt), $($arg)*);
     };
 
     ($fmt:expr) => {
-        $crate::sprint!(concat!("\x1b[32m[LOG]:\x1b[39m ", $fmt));
+        $crate::sprint!(concat!("\x1b[32m[LOG|", file!(), ":", line!(), ":", column!(), "]: \x1b[39m",  $fmt));
     };
 
 }
@@ -194,4 +215,9 @@ macro_rules! serr {
 /// Wait For The Next Interrupt.
 pub fn spin() {
     hlt()
+}
+
+/// Lock The System Globals Config.
+pub fn globals<'a>() -> MutexGuard<'a, Option<SystemConfig>> {
+    GLOBAL_CONFIG.lock()
 }

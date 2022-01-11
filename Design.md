@@ -15,13 +15,13 @@
 ### Minimum Viable Product
 
 - [ ] Unix-like shell Environment
-- [ ] Read-Only USTAR Filesystem for Boot files / Modules
+- [x] Read-Only USTAR Filesystem for Boot files / Modules
 - [ ] Basic Usermode
 - [x] Support For x86-64 Machines
 - [x] BIOS Bootloader
 - [x] VGA 80x25 Textmode
-- [ ] Interrupt API
-- [ ] Memory Allocation
+- [x] Interrupt API
+- [x] Memory Allocation
 
 ## APIs
 
@@ -30,6 +30,13 @@
 ### Graphics
 
 ### I/O
+
+
+### Storage
+
+---
+
+- [ ] Block Allocation/Deallocation
 
 
 
