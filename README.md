@@ -18,10 +18,15 @@
   - [ ] - Flat Binary Loader
   - [ ] - Linking?
 
-- [ ] - File System
-  - [ ] - Contact Vincent Ollivier About Implementing MorosFS As A
+- [x] - File System
+  - [x] - Contact Vincent Ollivier About Implementing MorosFS As A
           Standalone FileSystem. 
-  - [ ] - Implement MOROS FS.
+  - [x] - Implement MOROS FS.
+
+- [ ] - MMU API
+  - [ ] - Requesting  Pages
+  - [ ] - Setting Flags On Pages
+  - [ ] - Removing Pages
 
 ## Installation
 Linux (Recommended)
