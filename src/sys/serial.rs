@@ -27,6 +27,6 @@ pub fn _print(args: Arguments) {
 #[macro_export]
 macro_rules! sprint {
     ($($arg:tt)*) => {
-        $crate::sys::serial::_print(format_args!($($arg)*));
+        $crate::sys::serial::_print(format_args!($($arg)*))
     }
 }

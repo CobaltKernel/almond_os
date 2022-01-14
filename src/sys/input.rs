@@ -9,7 +9,7 @@ type KeyboardUk = Keyboard<Uk105Key, ScancodeSet1>;
 
 use crate::{KResult, print};
 
-use super::{mem::ringbuffer::RingBuffer256, terminal};
+use super::{mem::ringbuffer::RingBuffer256};
 
 /// ASCII DELETE KEY (0x7F)
 pub const DELETE: char = '\x7f';

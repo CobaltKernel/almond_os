@@ -7,12 +7,11 @@
 
 use alloc::{
     string::{String, ToString},
-    vec,
     vec::Vec,
     collections::BTreeMap
 };
 
-use crate::{KResult, slog};
+use crate::{slog};
 
 /// Holds & Maintains System Configuration Info
 #[derive(Debug)]

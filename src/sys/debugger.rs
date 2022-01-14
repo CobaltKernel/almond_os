@@ -1,7 +1,13 @@
 //! Kernel Debugger
 
 use alloc::string::String;
-use x86_64::{registers::control::{Cr0Flags, Cr2, Cr3Flags, Cr4Flags}, VirtAddr, structures::paging::{PageTable, Size4KiB, PhysFrame}};
+use x86_64::{
+    registers::control::{
+        Cr0Flags, Cr3Flags, Cr4Flags
+    }, VirtAddr, structures::paging::{
+        Size4KiB, PhysFrame
+    }
+};
 
 pub mod disassembler;
 
@@ -13,7 +19,6 @@ pub fn disassemble(addr: usize, len: usize) -> String {
 /// Read The Value Of EAX. Clobbers ECX
 pub fn read_eax() -> i32 {
     let mut eax: i32;
-    let mut tmp: i32;
     unsafe {
         asm!("mov eax, eax", out("eax") eax);
     }
@@ -35,7 +40,6 @@ pub fn read_ebx() -> i32 {
 /// Read The Value Of ECX. Clobbers EAX
 pub fn read_ecx() -> i32 {
     let mut ecx: i32;
-    let mut tmp: i32;
     unsafe {
         asm!("mov ecx, ecx", out("ecx") ecx);
 

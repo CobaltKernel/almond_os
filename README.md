@@ -12,6 +12,16 @@
   - [ ] - Double ended Queue
   - [x] - Input System
   
+- [ ] - Program Loading
+  - [ ] - Segment Mapping
+  - [ ] - ELF64 Loader
+  - [ ] - Flat Binary Loader
+  - [ ] - Linking?
+
+- [ ] - File System
+  - [ ] - Contact Vincent Ollivier About Implementing MorosFS As A
+          Standalone FileSystem. 
+  - [ ] - Implement MOROS FS.
 
 ## Installation
 Linux (Recommended)

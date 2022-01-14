@@ -1,7 +1,8 @@
 [package]
 name = "almond_os"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -11,6 +12,7 @@ list_allocator = []
 bump_allocator = []
 
 headless = []
+shell = []
 
 default = ["list_allocator"]
 
@@ -44,9 +46,11 @@ features = ["no_std", "decoder", "nasm"]
 version = "1.4.0"
 features = ["spin_no_std"]
 
+
+
 [package.metadata.bootimage]
 run-args = [
-    "-hdb", "disk.img",
+    "-hdb", "mfs.img",
     "-serial", "stdio",
     "-soundhw", "pcspk"
 ]

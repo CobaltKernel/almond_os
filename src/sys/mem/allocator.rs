@@ -16,7 +16,7 @@ static BUMP: Locked<BumpAllocator> = Locked::new(BumpAllocator::new());
 
 #[alloc_error_handler]
 fn alloc_error_handler(layout: alloc::alloc::Layout) -> ! {
-    panic!("allocation error: {:?}", layout)
+    panic!("== Out Of Memory ==\nAttempted To Allocate {} Bytes.", layout.size());
 }
 
 #[derive(Debug, Clone, Copy)]

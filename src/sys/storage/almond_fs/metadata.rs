@@ -4,6 +4,8 @@ use crate::KResult;
 
 use super::{block::Block, filesystem::METADATA_START};
 
+#[derive(Debug)]
+#[allow(dead_code)]
 pub struct MetaDataBlock {
     index: usize,
     /// File/Dir Name - Pos: 0, Size: 256 (NT)

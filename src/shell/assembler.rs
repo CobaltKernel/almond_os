@@ -1,4 +1,4 @@
-use alloc::collections::{BTreeSet, BTreeMap};
+use alloc::collections::{BTreeMap};
 
 use crate::{slog, sys::storage::ustar::MetaData, sprint};
 
@@ -6,12 +6,13 @@ use super::*;
 
 const INSTRUCTION_LENGTH: usize = 4;
 
+#[allow(dead_code)]
 enum Token {
     Instruction(String),
     LiteralNumber(usize),
     LiteralString(String)
 }
-
+#[allow(dead_code)]
 pub struct Assembler {
     src: Vec<String>,
     symbols: BTreeMap<String, usize>,
@@ -35,7 +36,7 @@ impl Assembler {
 
     pub fn resolve_symbols(&mut self) {
         let mut address = 0;
-        for (index, line) in self.src.iter_mut().enumerate() {
+        for (_index, line) in self.src.iter_mut().enumerate() {
             *line = String::from(line.trim());
             if line.is_empty() { continue; }
             
@@ -57,7 +58,7 @@ impl Assembler {
 
 impl Program for Assembler {
 
-    fn run(&mut self, args: Args) -> ShellExitCode {
+    fn run(&mut self, _args: Args) -> ShellExitCode {
         self.resolve_symbols();
 
         ShellExitCode::Ok

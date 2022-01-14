@@ -5,6 +5,7 @@ use crate::KResult;
 
 use super::block::Block;
 
+#[derive(Debug)]
 pub struct Bitmap;
 
 impl Bitmap {

@@ -77,8 +77,7 @@ impl MetaData {
 
     /// Load MetaData From A Drive.
     pub fn load(drive: usize, index: u32) -> KResult<MetaData> {
-        let mut data: [u8; 512] = [0; 512];
-        ata::read(drive, index, &mut data)?;
+        let data = ata::read_block(drive, index)?;
         let name = String::from_utf8(data[0..256].to_vec()).unwrap_or("UNK".to_string());
         let file_type = FileType::from_u8(u8::from_be_bytes((&data[256..257]).try_into().unwrap()));
         let size = u32::from_be_bytes((&data[257..261]).try_into().unwrap());

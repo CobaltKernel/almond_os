@@ -4,9 +4,10 @@
 use alloc::{string::{String, ToString}, vec::{Vec}, vec};
 use ata::Disk;
 
-use crate::{log, sys::storage::fs_utils};
+use crate::{sys::storage::fs_utils};
 
 use super::ata;
+#[allow(unused)]
 #[derive(Debug)]
 /// Implementations Of [USTAR MetaData Nodes](https://en.wikipedia.org/wiki/Tar_(computing)#Header)
 pub struct MetaData {

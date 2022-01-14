@@ -2,8 +2,6 @@
 
 use alloc::string::{String, ToString};
 
-use crate::slog;
-
 #[derive(Debug)]
 /// Represents An Object That Implements [FileIO]
 pub struct FileHandle(u16);

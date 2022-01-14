@@ -3,7 +3,7 @@ use core::fmt::Write;
 
 use crate::no_interrupt;
 
-use super::vga::{self, put_char, Color, ColorAttrib};
+use super::{vga::{self, put_char, Color, ColorAttrib}, input::NEW_LINE};
 use lazy_static::lazy_static;
 use pc_keyboard::{DecodedKey, KeyCode};
 use spin::Mutex;
@@ -370,6 +370,28 @@ pub fn process_raw_key(key: KeyCode) {
     no_interrupt!({
         WRITER.lock().process_raw_key(key);
     });
+}
+
+/// puts A String At X,Y
+pub fn put_string(x: usize, y: usize, text: &str, color: (Color, Color)) {
+    let mut x = x;
+    let mut y = y;
+    for chr in text.chars() {
+        if x >= 80 {
+            y += 1;
+            x = 0;
+        }
+
+        if chr != NEW_LINE {
+            put_char(x, y, chr as u8, ColorAttrib::new(color.1, color.0));
+        } else {
+            x = 0;
+            y += 1;
+        }
+
+        x += 1;
+
+    }
 }
 
 /// A Simple ASCII Spinner.
