@@ -11,6 +11,7 @@ mod hexdump;
 mod almond_vm;
 mod assembler;
 mod elf;
+mod texteditor;
 
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
@@ -29,6 +30,7 @@ use self::hexdump::{HexDump, SectorDump};
 use self::ls::FileLister;
 use self::mount::Mount;
 use self::sleep::Sleep;
+use self::texteditor::TextEditor;
 
 /// Alias For The Arguments Of A Program
 pub type Args = Vec<String>;
@@ -62,6 +64,8 @@ pub fn run(cmd: &str) -> ShellExitCode {
         "asm" => {Assembler::get(parts.clone()).run(parts)}
         "elf" => {ElfReader.run(parts)}
 
+        "ted" => {TextEditor::load_or_create(parts.clone()).run(parts)}
+
         _ => { print!("Unknown Command: '{}'...\n", cmd); ShellExitCode::NoSuchProgram},
     };
 
@@ -75,7 +79,7 @@ pub fn main() {
     set_bg!(Color::Blue);
     set_fg!(Color::White);
     'input_loop: loop {
-        let  cmd = input::input(globals().as_ref().unwrap().get_string("PROMPT").unwrap_or(&String::from(">> ")));
+        let  cmd = input::input(">> ");
         if cmd.is_empty() {continue 'input_loop;}
         if cmd == String::from("exit") {break 'input_loop;}
         run(cmd.as_str());

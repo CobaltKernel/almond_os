@@ -4,7 +4,7 @@ use alloc::{borrow::ToOwned, string::String};
 
 use crate::{
     log,
-    sys::{self, storage::ata},
+    sys::{storage::ata},
     KResult,
 };
 
@@ -53,10 +53,9 @@ impl SuperBlock {
 
     /// Load The Superblock from Drive.
     pub fn load(drive: usize) -> KResult<Self> {
-        let mut buffer = [0; 512];
-        sys::storage::ata::read(drive, 0, &mut buffer)?;
+        let data = ata::read_block(drive, 0)?;
 
-        if let Some(block) = SuperBlock::new(&buffer) {
+        if let Some(block) = SuperBlock::new(&data) {
             Ok(block)
         } else {
             Err("Failed To Create SuperBlock")

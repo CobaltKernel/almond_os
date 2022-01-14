@@ -22,8 +22,7 @@ pub struct DataBlock {
 impl DataBlock {
     /// Reads A [Sector] Data Block From Disk
     pub fn read(drive: usize, addr: u32) -> KResult<Self> {
-        let mut buffer = [0; 512];
-        ata::read(drive, addr, &mut buffer)?;
+        let buffer = ata::read_block(drive, addr)?;
         let mut data = [0; 508];
         data.copy_from_slice(&buffer[4..]);
         Ok(Self {

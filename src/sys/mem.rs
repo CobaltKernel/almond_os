@@ -1,9 +1,10 @@
 //! [UNSTABLE]
 //! Utility Functions For Managing Memory & The Kernel heap.
 use core::alloc::Layout;
+pub use x86_64::structures::paging::PageTableFlags;
 
 use bootloader::BootInfo;
-use x86_64::{structures::paging::PageTable, VirtAddr};
+use x86_64::{structures::paging::PageTable, VirtAddr, PhysAddr};
 
 use crate::KResult;
 
@@ -45,4 +46,10 @@ pub unsafe fn malloc(layout: Layout) -> *mut u8 {
 /// Allocate Memory On The Kernel Heap.
 pub unsafe fn free(ptr: *mut u8, layout: Layout) {
     allocator::free(ptr, layout);
+}
+
+
+/// Map A Virtual Address To A Physical Address 
+pub fn map_virt(_vaddr: VirtAddr, _paddr: PhysAddr) {
+    
 }

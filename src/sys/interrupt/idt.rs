@@ -1,7 +1,7 @@
 //! Utility Functions For Interacting With IDT.
 
 use super::{default_handler, InterruptHandler, MAX_HANDLERS};
-use crate::{no_interrupt, shell};
+use crate::{no_interrupt};
 use lazy_static;
 use spin::Mutex;
 use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode};
@@ -27,7 +27,7 @@ lazy_static::lazy_static! {
 
         idt.breakpoint.set_handler_fn(breakpoint_handler);
         idt.double_fault.set_handler_fn(double_fault);
-        //idt.page_fault.set_handler_fn(page_fault);
+        idt.page_fault.set_handler_fn(page_fault);
 
         idt
     };

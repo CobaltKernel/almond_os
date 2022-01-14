@@ -1,4 +1,4 @@
-use crate::vfs::{self, AtaDevice, Device};
+use crate::vfs::{self, Device};
 
 use super::*;
 

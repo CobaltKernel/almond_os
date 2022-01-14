@@ -2,7 +2,7 @@
 use alloc::{format, string::String, vec};
 use iced_x86::*;
 
-use crate::{sys::mem::mapper::physical_memory_offset, slog};
+use crate::{sys::mem::mapper::physical_memory_offset};
 
 /// Disassemble x86 Instructions Into The NASM Format.
 pub fn disassemble(addr: usize, len: usize) -> String {

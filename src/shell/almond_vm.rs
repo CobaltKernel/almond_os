@@ -1,12 +1,9 @@
-use core::fmt::Alignment;
 
-use super::*;
 
-use alloc::vec;
-use vec::Vec;
-
+#[allow(dead_code)]
 const MEM_SIZE: usize = u16::MAX as usize;
 
+#[allow(dead_code)]
 pub struct AlmondVM {
     ip: usize,
     acc: usize,

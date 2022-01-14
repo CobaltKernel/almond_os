@@ -451,7 +451,8 @@ pub fn read(drive: usize, addr: SectorIndex, buf: &mut [u8]) -> KResult<()> {
 pub fn read_block(drive: usize, addr: SectorIndex) -> KResult<[u8; 512]> {
     if let Some(mut disk) = Disk::new(drive) {
         let mut buf = [0; 512];
-        disk.read(addr, &mut buf);
+        #[allow(deprecated)]
+        disk.read(addr, &mut buf)?;
         Ok(buf)
     } else {
         return Err("Failed To Get Drive.");
@@ -469,7 +470,6 @@ pub fn write(drive: usize, addr: SectorIndex, buf: &[u8]) -> KResult<()> {
 
 /// Copies Sectors Between Drives
 pub unsafe fn copy(dest_drive: usize, src_drive: usize, start: u32, amount: usize) -> KResult<()> {
-    let mut data = [0; 512];
     let mut prog = 0;
     let mut spinner = Spinner::new();
     log!(
@@ -479,14 +479,13 @@ pub unsafe fn copy(dest_drive: usize, src_drive: usize, start: u32, amount: usiz
         amount
     );
     for index in start..start + amount as u32 {
-        read(src_drive, index, &mut data)?;
-        write(dest_drive, index, &data)?;
+        write(dest_drive, index, &read_block(src_drive, index)?)?;
         if prog > 0 && prog % 128 == 0 {
             spinner.update();
             log!(
                 "Copying Sectors...{} - ({:05}/{:05})\r",
                 spinner.glyph(),
-                prog,
+                index,
                 amount
             );
         }

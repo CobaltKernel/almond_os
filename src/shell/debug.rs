@@ -2,7 +2,6 @@
 use crate::shell::ShellExitCode;
 use crate::sys::debugger::{disassembler, self};
 use crate::print;
-use crate::sys::mem;
 
 use super::*;
 

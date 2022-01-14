@@ -21,10 +21,11 @@ use spin::{Mutex, MutexGuard};
 pub mod sys;
 pub mod shell;
 pub mod vfs;
+pub mod pci;
 
 pub use x86_64::instructions::interrupts::without_interrupts;
 
-use crate::{sys::storage::ustar, vfs::{Device, AtaDevice}};
+use crate::{sys::storage::{ustar, mfs}};
 
 /// The Kernel Result, Used To unify error-handling / reporting.
 pub type KResult<T> = core::result::Result<T, &'static str>;
@@ -47,13 +48,18 @@ pub fn boot(info: &'static BootInfo) {
 
     run!("mount HDB");
 
-    if sys::storage::ustar::list(1).contains(&String::from("disk/global.cfg")) {
-        slog!("Loading Global Config\n");
-        let mut cfg_lock =  GLOBAL_CONFIG.lock();
-        *cfg_lock = Some(SystemConfig::from_str(&ustar::MetaData::load(1, "disk/global.cfg").unwrap().read_string()));
-    } else {
-        serr!("Unable To Locate 'disk/global.cfg'\n");
+    if !mfs::super_block::SuperBlock::check_dev() {
+        slog!("Formatting Device...");
+        mfs::format();
     }
+
+    // if sys::storage::ustar::list(1).contains(&String::from("disk/global.cfg")) {
+    //     slog!("Loading Global Config\n");
+    //     let mut cfg_lock =  GLOBAL_CONFIG.lock();
+    //     *cfg_lock = Some(SystemConfig::from_str(&ustar::MetaData::load(1, "disk/global.cfg").unwrap().read_string()));
+    // } else {
+    //     serr!("Unable To Locate 'disk/global.cfg'\n");
+    // }
 }
 
 fn test_init() -> KResult<()> {

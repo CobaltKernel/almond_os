@@ -1,7 +1,7 @@
 //! Virtual FileSystem
 use alloc::{vec, boxed::Box};
 use vec::Vec;
-use crate::{sys::{self, storage::ata}, KResult, no_interrupt, slog};
+use crate::{sys::{storage::ata}, KResult, no_interrupt, slog};
 use lazy_static::lazy_static;
 use spin::{Mutex, MutexGuard};
 
@@ -15,9 +15,15 @@ lazy_static! {
 pub fn mount(dev: Device) {
     no_interrupt!({
         slog!("Mounting Device: {:?}\n", dev);
-        *DEVICE.lock() = Some(dev)
+        *DEVICE.lock() = Some(dev);
+        slog!("Mounted Device\n");
     })
 }
+
+pub fn is_mounted() -> bool {
+    DEVICE.lock().is_some()
+}
+
 
 pub fn device<'dev>() -> MutexGuard<'dev, Option<Device>> {
         DEVICE.lock()
@@ -53,6 +59,9 @@ pub trait Dir {
 pub trait BlockDeviceIO {
     fn read(&self, index: usize) -> KResult<[u8; BLOCK_SIZE]>;
     fn write(&mut self, index: usize, data: &[u8]) -> KResult<()>;
+
+    fn block_size(&self) -> usize;
+    fn block_count(&self) -> usize;
 }
 
 #[derive(Debug, Clone)]
@@ -85,6 +94,20 @@ impl BlockDeviceIO for Device {
             Self::Mem(dev) => {dev.write(index, data)}
         }
     }
+
+    fn block_count(&self) -> usize {
+        match self {
+            Self::Ata(dev) => {dev.block_count()}
+            Self::Mem(dev) => {dev.block_count()}
+        }
+    }
+
+    fn block_size(&self) -> usize {
+        match self {
+            Self::Ata(dev) => {dev.block_size()}
+            Self::Mem(dev) => {dev.block_size()}
+        }
+    }
 }
 #[derive(Debug, Clone)]
 pub struct AtaDevice(usize);
@@ -111,6 +134,14 @@ impl BlockDeviceIO for AtaDevice {
     fn write(&mut self, index: usize, data: &[u8]) -> KResult<()> {
         ata::write(self.0, index as u32, data)
     }
+
+    fn block_count(&self) -> usize {
+        262_144
+    }
+
+    fn block_size(&self) -> usize {
+        512
+    }
 }
 
 impl BlockDeviceIO for MemDevice {
@@ -133,5 +164,13 @@ impl BlockDeviceIO for MemDevice {
         } else {
             Err("Index Out Of Bounds")
         }
+    }
+
+    fn block_count(&self) -> usize {
+        self.0.len()
+    }
+
+    fn block_size(&self) -> usize {
+        512
     }
 }

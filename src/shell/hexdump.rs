@@ -15,7 +15,7 @@ impl Program for HexDump {
             if let Some(md) = md {
                 let mut buffer = vec![0; md.file_size() as usize]; 
                 let bytes_read = md.read_data(&mut buffer);
-                for row in (0..512).step_by(16) {
+                for row in (0..bytes_read).step_by(16) {
                     print!("${:04x} | ", row);
                     let mut text = String::new();
                     for col in 0..16 {

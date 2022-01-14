@@ -33,30 +33,26 @@ impl DataBitmap {
 
     /// Check Whether Or Not The Given [DataBlock] Address Is Free.
     pub fn is_free(drive: usize, block: u32) -> bool {
-        let mut bitmap = [0; 512];
-        ata::read(drive, Self::bitmap(block), &mut bitmap).expect("Disk Read Error");
+        let bitmap = ata::read_block(drive, Self::bitmap(block)).expect("Disk Read Error");
         return !bitmap[Self::offset(block) as usize].get_bit(Self::bit(block) as usize);
     }
 
     /// Check Whether Or Not The Given [DataBlock] Address Used.
     pub fn is_used(drive: usize, block: u32) -> bool {
-        let mut bitmap = [0; 512];
-        ata::read(drive, Self::bitmap(block), &mut bitmap).expect("Disk Read Error");
+        let bitmap = ata::read_block(drive, Self::bitmap(block)).expect("Disk Read Error");
         return bitmap[Self::offset(block) as usize].get_bit(Self::bit(block) as usize);
     }
 
     /// Allocate A DataBlock Address
     pub fn allocate(drive: usize, block: u32) {
-        let mut bitmap = [0; 512];
-        ata::read(drive, Self::bitmap(block), &mut bitmap).expect("Disk Read Error");
+        let mut bitmap = ata::read_block(drive, Self::bitmap(block)).expect("Disk Read Error");
         bitmap[Self::offset(block) as usize].set_bit(Self::bit(block) as usize, true);
         ata::write(drive, Self::bitmap(block), &bitmap).expect("MKA");
     }
 
     /// Free A DataBlock Address
     pub fn free(drive: usize, block: u32) {
-        let mut bitmap = [0; 512];
-        ata::read(drive, Self::bitmap(block), &mut bitmap).expect("Disk Read Error");
+        let mut bitmap = ata::read_block(drive, Self::bitmap(block)).expect("Disk Read Error");
         bitmap[Self::offset(block) as usize].set_bit(Self::bit(block) as usize, false);
         ata::write(drive, Self::bitmap(block), &bitmap).expect("Disk Write Error");
     }

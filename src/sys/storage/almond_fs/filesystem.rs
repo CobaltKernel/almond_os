@@ -1,4 +1,4 @@
-use alloc::{borrow::ToOwned, boxed::Box};
+use alloc::{boxed::Box};
 
 use crate::vfs::FileSystem;
 
@@ -33,6 +33,7 @@ pub struct AlmondFileSystem {
     _private: (),
 }
 
+#[allow(unused)]
 impl FileSystem for AlmondFileSystem {
     fn block_count(&self) -> usize {
         todo!();

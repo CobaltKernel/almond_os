@@ -4,8 +4,6 @@ use alloc::string::String;
 
 use crate::{vfs::{self, BlockDeviceIO, BLOCK_SIZE}, KResult};
 
-use super::filesystem::BLOCKS_IN_BITMAP;
-
 #[derive(Debug, Clone, Copy)]
 pub struct Block {
     addr: u32,
